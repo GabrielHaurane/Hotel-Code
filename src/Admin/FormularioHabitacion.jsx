@@ -6,93 +6,138 @@ import Swal from "sweetalert2";
 import {
   crearHabitacionAdmin,
   editarHabitacionAdmin,
-  obtenerHabitacionAdmin,
+  obtenerHabitacion,
 } from "../helpers/queries.js";
+import { datetimeLocalAISO, isoADatetimeLocal } from "../helpers/fechas.js";
+
+const valoresIniciales = {
+  tipoHabitacion: "",
+  capacidad: "",
+  precio: "",
+  servicios: "",
+  descripcion_breve: "",
+  descripcion_amplia: "",
+  tamanio: "",
+  imagen: "",
+  disponibilidad: "true",
+  fechaEntrada: "",
+  fechaSalida: "",
+};
+
+// Arma el texto de error con el `mensaje` del back y, si vienen, los `errores` de validación.
+const textoErrorBack = (datos, porDefecto) => {
+  const mensaje = datos?.mensaje || porDefecto;
+  if (!Array.isArray(datos?.errores) || datos.errores.length === 0) return mensaje;
+  const detalle = datos.errores
+    .map((e) => (typeof e === "string" ? e : e?.msg || e?.mensaje))
+    .filter(Boolean)
+    .join(" | ");
+  return detalle ? `${mensaje}: ${detalle}` : mensaje;
+};
+
+// Inicio del día de hoy (hora local), para validar "fecha de entrada >= hoy" al crear.
+const inicioDeHoy = () => {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  return hoy;
+};
 
 const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     reset,
-    setValue,
-  } = useForm();
+    getValues,
+  } = useForm({ defaultValues: valoresIniciales });
 
   const { id } = useParams();
   const navegacion = useNavigate();
 
   useEffect(() => {
-    if (!creandoHabitacion) {
-      cargarHabitacion();
-    }
-  }, []);
+    if (creandoHabitacion) return;
 
-  const cargarHabitacion = async () => {
-    const habitacionEncontrada = await obtenerHabitacionAdmin(id);
-    if (habitacionEncontrada) {
-      setValue("tipoHabitacion", habitacionEncontrada.tipoHabitacion);
-      setValue("capacidad", habitacionEncontrada.capacidad);
-      setValue("precio", habitacionEncontrada.precio);
-      setValue("servicios", habitacionEncontrada.servicios);
-      setValue("descripcion_breve", habitacionEncontrada.descripcion_breve);
-      setValue("descripcion_amplia", habitacionEncontrada.descripcion_amplia);
-      setValue("tamanio", habitacionEncontrada.tamanio);
-      setValue("imagen", habitacionEncontrada.imagen);
-      setValue("disponibilidad", habitacionEncontrada.disponibilidad);
-         const fechaEntradaFormateada = new Date(
-           habitacionEncontrada.fechaEntrada
-         )
-           .toISOString()
-           .slice(0, 16); 
-           
-         const fechaSalidaFormateada = new Date(
-           habitacionEncontrada.fechaSalida
-         )
-           .toISOString()
-           .slice(0, 16);
-
-         setValue("fechaEntrada", fechaEntradaFormateada);
-         setValue("fechaSalida", fechaSalidaFormateada);
-    } else {
-      Swal.fire({
-        title: "Error",
-        text: "No se pudo cargar la habitación. Inténtalo más tarde.",
-        icon: "error",
-      });
-    }
-  };
-
-  const onSubmit = async (habitacion) => {
-    if (creandoHabitacion) {
-      const respuesta = await crearHabitacionAdmin(habitacion);
-     
-      if (respuesta.status === 201) {
-        reset();
-        Swal.fire({
-          title: "Habitación creada",
-          text: `La habitación fue creada correctamente`,
-          icon: "success",
+    const cargarHabitacion = async () => {
+      const { ok, status, datos } = await obtenerHabitacion(id);
+      if (ok && datos) {
+        reset({
+          tipoHabitacion: datos.tipoHabitacion ?? "",
+          capacidad: datos.capacidad ?? "",
+          precio: datos.precio ?? "",
+          servicios: datos.servicios ?? "",
+          descripcion_breve: datos.descripcion_breve ?? "",
+          descripcion_amplia: datos.descripcion_amplia ?? "",
+          tamanio: datos.tamanio ?? "",
+          imagen: datos.imagen ?? "",
+          disponibilidad: String(Boolean(datos.disponibilidad)),
+          fechaEntrada: isoADatetimeLocal(datos.fechaEntrada),
+          fechaSalida: isoADatetimeLocal(datos.fechaSalida),
         });
       } else {
         Swal.fire({
           title: "Error",
-          text: `No se pudo cargar la ${habitacion.tipoHabitacion}. Inténtalo más tarde.`,
+          text:
+            status === 404
+              ? "La habitación que querés editar no existe."
+              : datos?.mensaje || "No se pudo cargar la habitación. Inténtalo más tarde.",
+          icon: "error",
+        }).then(() => navegacion("/administrador"));
+      }
+    };
+    cargarHabitacion();
+  }, [creandoHabitacion, id, reset, navegacion]);
+
+  const onSubmit = async (formulario) => {
+    const fechaEntrada = datetimeLocalAISO(formulario.fechaEntrada);
+    const fechaSalida = datetimeLocalAISO(formulario.fechaSalida);
+    if (!fechaEntrada || !fechaSalida) {
+      Swal.fire({
+        title: "Error",
+        text: "Las fechas ingresadas no son válidas.",
+        icon: "error",
+      });
+      return;
+    }
+
+    const habitacion = {
+      ...formulario,
+      disponibilidad: formulario.disponibilidad === true || formulario.disponibilidad === "true",
+      fechaEntrada,
+      fechaSalida,
+    };
+
+    if (creandoHabitacion) {
+      const { ok, status, datos } = await crearHabitacionAdmin(habitacion);
+      if (ok) {
+        reset(valoresIniciales);
+        Swal.fire({
+          title: "Habitación creada",
+          text: datos?.mensaje || "La habitación fue creada correctamente",
+          icon: "success",
+        });
+      } else if (status !== 401) {
+        Swal.fire({
+          title: "Error",
+          text: textoErrorBack(
+            datos,
+            `No se pudo cargar la ${habitacion.tipoHabitacion}. Inténtalo más tarde.`
+          ),
           icon: "error",
         });
       }
     } else {
-      const respuesta = await editarHabitacionAdmin(id, habitacion);
-      if (respuesta.status === 200) {
+      const { ok, status, datos } = await editarHabitacionAdmin(id, habitacion);
+      if (ok) {
         Swal.fire({
           title: "Habitación editada",
-          text: `La habitación fue editada correctamente`,
+          text: datos?.mensaje || "La habitación fue editada correctamente",
           icon: "success",
         });
         navegacion("/administrador");
-      } else {
+      } else if (status !== 401) {
         Swal.fire({
           title: "Error",
-          text: "No se pudo editar la habitación. Inténtalo más tarde.",
+          text: textoErrorBack(datos, "No se pudo editar la habitación. Inténtalo más tarde."),
           icon: "error",
         });
       }
@@ -102,9 +147,9 @@ const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
     <section className="container flex-grow-1">
       <h1 className="display-4 mt-5">{titulo}</h1>
       <hr />
-      <Form className="my-4" onSubmit={handleSubmit(onSubmit)}>
+      <Form className="my-4" onSubmit={handleSubmit(onSubmit)} noValidate>
         <Form.Group className="mb-3" controlId="forTipoHabitacion">
-          <Form.Label>Tipo de Habitación</Form.Label>
+          <Form.Label>Tipo de Habitación*</Form.Label>
           <Form.Select
             {...register("tipoHabitacion", {
               required: "Seleccione un tipo de habitacion",
@@ -115,23 +160,26 @@ const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
             <option value="Habitacion Doble">Habitacion Doble</option>
             <option value="Habitacion Familiar">Habitacion Familiar</option>
             <option value="Suite Junior">Suite Junior</option>
-            <option value="Suite Precidencial">Suite Presidencial</option>
+            <option value="Suite Presidencial">Suite Presidencial</option>
           </Form.Select>
           <Form.Text className="text-danger">
             {errors.tipoHabitacion?.message}
           </Form.Text>
         </Form.Group>
         <Form.Group className="mb-3">
-          <Form.Label>Capacidad</Form.Label>
+          <Form.Label>Capacidad*</Form.Label>
           <Form.Control
             type="number"
             {...register("capacidad", {
+              valueAsNumber: true,
               required: "La capacidad es un dato obligatorio",
               min: { value: 1, message: "La capacidad mínima es de 1 persona" },
               max: {
                 value: 6,
                 message: "La capacidad máxima es de 6 personas",
               },
+              validate: (valor) =>
+                Number.isInteger(valor) || "La capacidad debe ser un número entero",
             })}
           />
           <Form.Text className="text-danger">
@@ -143,7 +191,9 @@ const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
           <Form.Control
             type="number"
             {...register("precio", {
-              min: { value: 100, message: "El precio minimo es 100 usd" },
+              valueAsNumber: true,
+              required: "El precio es un dato obligatorio",
+              min: { value: 100, message: "El precio mínimo es 100 usd" },
               max: { value: 500, message: "El precio máximo es de 500 usd" },
             })}
           />
@@ -159,7 +209,7 @@ const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
               required: "El servicio es un dato obligatorio",
               minLength: {
                 value: 10,
-                message: "Debe ingresar máximo 10 caracteres",
+                message: "Debe ingresar como mínimo 10 caracteres",
               },
               maxLength: {
                 value: 500,
@@ -180,7 +230,7 @@ const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
               required: "La descripcion breve es un dato obligatorio",
               minLength: {
                 value: 20,
-                message: "Debe ingresar máximo 20 caracteres",
+                message: "Debe ingresar como mínimo 20 caracteres",
               },
               maxLength: {
                 value: 300,
@@ -201,7 +251,7 @@ const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
               required: "La descripcion amplia es un dato obligatorio",
               minLength: {
                 value: 30,
-                message: "Debe ingresar máximo 30 caracteres",
+                message: "Debe ingresar como mínimo 30 caracteres",
               },
               maxLength: {
                 value: 1000,
@@ -218,6 +268,7 @@ const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
           <Form.Control
             type="number"
             {...register("tamanio", {
+              valueAsNumber: true,
               required: "El tamaño es un dato obligatorio",
               min: {
                 value: 10,
@@ -234,16 +285,16 @@ const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
           </Form.Text>
         </Form.Group>
         <Form.Group className="mb-3">
-          <Form.Label>Url de imagen</Form.Label>
+          <Form.Label>Url de imagen*</Form.Label>
           <Form.Control
             type="text"
             placeholder="Ej: https://wwww.ejemploimagen.com/habitacion.jpg"
             {...register("imagen", {
               required: "La URL de la imagen es un dato obligatorio",
               pattern: {
-                value: /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|jpeg|gif|png)/,
+                value: /^https?:\/\/\S+$/i,
                 message:
-                  "Debe ingresar una url de imagen valida, los formatos admitivos son (jpg|jpeg|gif|png)",
+                  "Debe ingresar una URL válida que comience con http:// o https://",
               },
             })}
           />
@@ -252,7 +303,7 @@ const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
           </Form.Text>
         </Form.Group>
         <Form.Group  className="mb-3">
-        <Form.Label>Disponibilidad</Form.Label>
+        <Form.Label>Disponibilidad*</Form.Label>
           <Form.Select
             {...register("disponibilidad", {
               required: "seleccione su disponibilidad",
@@ -262,7 +313,7 @@ const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
           <option value="false">No</option>
           </Form.Select>
           <Form.Text className="text-danger">
-            {errors.disponible?.message}
+            {errors.disponibilidad?.message}
           </Form.Text>
         </Form.Group>
         <Form.Group  className="mb-3">
@@ -272,8 +323,12 @@ const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
             {...register("fechaEntrada", {
               required: "La fecha de entrada es un dato obligatorio",
               validate: {
-                isFuture: (value) =>
-                  new Date(value) > new Date() || "La fecha debe ser futura",
+                valida: (valor) =>
+                  datetimeLocalAISO(valor) !== null || "Ingrese una fecha válida",
+                desdeHoy: (valor) =>
+                  !creandoHabitacion ||
+                  new Date(valor) >= inicioDeHoy() ||
+                  "La fecha de entrada no puede ser anterior a hoy",
               },
             })}
           />
@@ -288,8 +343,12 @@ const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
             {...register("fechaSalida", {
               required: "La fecha de salida es un dato obligatorio",
               validate: {
-                isFuture: (value) =>
-                  new Date(value) > new Date() || "La fecha debe ser futura",
+                valida: (valor) =>
+                  datetimeLocalAISO(valor) !== null || "Ingrese una fecha válida",
+                posterior: (valor) =>
+                  !getValues("fechaEntrada") ||
+                  new Date(valor) > new Date(getValues("fechaEntrada")) ||
+                  "La fecha de salida debe ser posterior a la fecha de entrada",
               },
             })}
           />
@@ -297,7 +356,7 @@ const FormularioHabitacion = ({ creandoHabitacion, titulo }) => {
             {errors.fechaSalida?.message}
           </Form.Text>
         </Form.Group>
-        <Button variant="primary" type="submit">
+        <Button variant="primary" type="submit" disabled={isSubmitting}>
           {creandoHabitacion ? "Crear Habitación" : "Editar Habitación"}
         </Button>
       </Form>

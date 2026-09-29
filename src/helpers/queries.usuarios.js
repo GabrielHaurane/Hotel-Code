@@ -1,88 +1,24 @@
-const URLUsuario = import.meta.env.VITE_API_USUARIO;
+// Usuarios. Todas las funciones devuelven { ok, status, datos } (ver api.js).
+import { peticion } from "./api.js";
 
-export const login = async (usuario) => {
-  try {
-    const respuesta = await fetch(URLUsuario + "/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(usuario),
-    });
-    return respuesta;
-  } catch (error) {
-    return false;
-  }
-};
+// → 200 datos: { mensaje, uid, email, rol, token } | 401 | 429
+export const login = ({ email, password }) =>
+  peticion("/usuarios/login", { method: "POST", body: { email, password } });
 
-export const registro = async (usuarioNuevo) => {
-  try {
-    const respuesta = await fetch(URLUsuario + "/registro", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: usuarioNuevo.email,
-        password: usuarioNuevo.password,
-        confirmarPassword: usuarioNuevo.confirmarPassword,
-      }),
-    });
-    return respuesta;
-  } catch (error) {
-    return false;
-  }
-};
+// → 201 datos: { mensaje }
+export const registro = ({ email, password, confirmarPassword }) =>
+  peticion("/usuarios/registro", {
+    method: "POST",
+    body: { email, password, confirmarPassword },
+  });
 
-export const obtenerUsuario = async (id) => {
-  try {
-    const respuesta = await fetch(URLUsuario + "/" + id);
-    return respuesta;
-  } catch (error) {
-    return false;
-  }
-};
+// ADMIN → datos: [{ id, email, rol }]
+export const listarUsuarios = () => peticion("/usuarios", { auth: true });
 
-export const editarUsuario = async (usuarioEditado, id) => {
-  try {
-    const respuesta = await fetch(URLUsuario + "/" + id, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "x-token": JSON.parse(sessionStorage.getItem("userKey")).token,
-      },
-      body: JSON.stringify(usuarioEditado),
-    });
-    return respuesta;
-  } catch (error) {
-    return false;
-  }
-};
+// ADMIN: cambia el rol { rol: "usuario" | "admin" } → 200 datos: { mensaje }
+export const editarUsuario = (id, { rol }) =>
+  peticion(`/usuarios/${id}`, { method: "PUT", body: { rol }, auth: true });
 
-export const listarUsuarios = async () => {
-  try {
-    const respuesta = await fetch(URLUsuario, {
-      method: "GET",
-      headers: {
-        "x-token": JSON.parse(sessionStorage.getItem("userKey")).token,
-      },
-    });
-    return respuesta;
-  } catch (error) {
-    return false;
-  }
-};
-
-export const borrarUsuario = async (id) => {
-  try {
-    const respuesta = await fetch(URLUsuario + "/" + id, {
-      method: "DELETE",
-      headers: {
-        "x-token": JSON.parse(sessionStorage.getItem("userKey")).token,
-      },
-    });
-    return respuesta;
-  } catch (error) {
-    return false;
-  }
-};
+// ADMIN → 200 datos: { mensaje }
+export const borrarUsuario = (id) =>
+  peticion(`/usuarios/${id}`, { method: "DELETE", auth: true });

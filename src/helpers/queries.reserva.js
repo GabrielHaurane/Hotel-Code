@@ -1,76 +1,19 @@
-const URLReserva = import.meta.env.VITE_API_RESERVA;
-const URLReservasAdmin = import.meta.env.VITE_API_RESERVA_ADMIN;
-export const listarReservas = async (email) => {
-  try {
-    const response = await fetch(`${URLReserva}?email=${email}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-token": JSON.parse(sessionStorage.getItem("userKey")).token,
-      },
-    });
-    if (!response.ok) throw new Error("Error al listar las reservas");
-    const data = await response.json();
-    return Array.isArray(data) ? data : [];
-    
-  } catch (error) {
-    console.error(error);
-  }
-};
-export const obtenerReserva = async (id) => {
-  try {
-    const response = await fetch(URLReserva + `/${id}`);
-    if (!response.ok) throw new Error("Error al obtener la reserva");
-    const data = await response.json();
+// Reservas. Todas las funciones devuelven { ok, status, datos } (ver api.js).
+// Cada Reserva ya incluye `habitacion: { id, tipoHabitacion, imagen, precio }`.
+import { peticion } from "./api.js";
 
-    return data;
-  } catch (error) {
-    console.error(error);
-  }
-};
-export const crearReserva = async (nuevaReserva) => {
-  try {
-    const response = await fetch(URLReserva, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(nuevaReserva),
-    });
-    if (!response.ok) throw new Error("Error al crear la reserva");
-    const data = await response.json();
+// JWT: reservas del usuario del token → datos: [Reserva]
+export const listarReservas = () => peticion("/reserva", { auth: true });
 
-    return data;
-  } catch (error) {
-    console.error(error);
-  }
-};
-export const borrarReserva = async (id) => {
-  try {
-    const response = await fetch(URLReserva + `/${id}`, {
-      method: "DELETE",
-      headers: {
-        "x-token": JSON.parse(sessionStorage.getItem("userKey")).token,
-      },
-    });
-    if (!response.ok) throw new Error("Error al borrar la reserva");
-    return response;
-  } catch (error) {
-    console.error(error);
-  }
-};
+// JWT: nueva reserva { habitacionID, fechaEntrada, fechaSalida } (YYYY-MM-DD)
+// → 201 datos: Reserva | 400/404/409 datos: { mensaje }
+export const crearReserva = (nuevaReserva) =>
+  peticion("/reserva", { method: "POST", body: nuevaReserva, auth: true });
 
-export const listarReservasAdmin = async () => {
-  try {
-    const respuesta = await fetch(URLReservasAdmin,{
-      headers: {
-        "x-token": JSON.parse(sessionStorage.getItem("userKey")).token,
-      }
-    });
-    if (!respuesta.ok) throw new Error("Error al listar las reservas");
-    const data =  await respuesta.json();
-    return Array.isArray(data) ? data : [];
-  } catch (error) {
-    console.error(error);
-  }
-};
+// JWT (dueño o admin) → 200 datos: { mensaje }
+export const borrarReserva = (id) =>
+  peticion(`/reserva/${id}`, { method: "DELETE", auth: true });
+
+// ADMIN: todas las reservas → datos: [Reserva]
+export const listarReservasAdmin = () =>
+  peticion("/reservasAdmin", { auth: true });

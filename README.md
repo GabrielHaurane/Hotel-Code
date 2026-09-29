@@ -44,18 +44,34 @@ Sigue estos pasos para configurar y ejecutar el proyecto en tu máquina local.
    cd Frontend-Proyecto-Final
 3. Instala las dependencias:
    npm install
-4. Configura las variables de entorno: Crea un archivo .env en la raíz del proyecto y agrega las configuraciones necesarias (por ejemplo, la URL de la API del backend).
+4. Configura las variables de entorno: copia `.env.example` a `.env` en la raíz del proyecto y completa los valores (URL de la API del backend y claves de EmailJS).
 5. Inicia el proyecto en modo desarrollo:
    npm run dev
 El proyecto debería estar corriendo en http://localhost:5173.
 
 ## 📖 Uso del Proyecto
 1. Inicio de Sesión/Registro: Los usuarios pueden crear una cuenta y autenticarse en el sistema.
-2. Búsqueda de Habitaciones: En el inicio, los usuarios pueden ver las habitaciones disponibles y aplicar filtros según sus preferencias.
-3. Reserva de Habitaciones: Selecciona una habitación y especifica las fechas para realizar una reserva.
+2. Búsqueda de Habitaciones: En el catálogo (público, no requiere sesión) se ven las habitaciones disponibles y se puede filtrar por fecha de entrada y salida.
+3. Reserva de Habitaciones: Selecciona una habitación y especifica las fechas para realizar una reserva (requiere iniciar sesión).
 4. Notificaciones: Al completar acciones como reserva o inicio de sesión, el sistema muestra notificaciones visuales para confirmar la operación.
 ## 📄 Variables de Entorno
-Asegúrate de configurar las siguientes variables en el archivo .env:
-VITE_API_HABITACION: URL del backend para realizar las solicitudes de las habitaciones y reservas.
+Asegúrate de configurar las siguientes variables en el archivo .env (ver `.env.example`):
+
+| Variable | Uso |
+|---|---|
+| `VITE_API_URL` | URL base del backend (sin barra final). Si falta, se usa `http://localhost:4000/api`. |
+| `VITE_EMAILJS_SERVICE_ID` | Service ID de EmailJS (formulario de Contacto). |
+| `VITE_EMAILJS_TEMPLATE_ID` | Template ID de EmailJS. |
+| `VITE_EMAILJS_PUBLIC_KEY` | Public key de EmailJS. |
+
 Ejemplo:
-VITE_API_HABITACION=http://localhost:4000/api
+```
+VITE_API_URL=http://localhost:4000/api
+```
+
+En Netlify, `VITE_API_URL` ya está definida en `netlify.toml`; las `VITE_EMAILJS_*` se cargan en *Site settings → Environment variables*.
+
+## 🧱 Arquitectura del cliente
+- `src/helpers/api.js`: capa HTTP única (`peticion`), arma la URL con `VITE_API_URL`, agrega el header `x-token` y devuelve siempre `{ ok, status, datos }`.
+- `src/helpers/queries*.js`: funciones por dominio (habitaciones, reservas, usuarios) sobre `peticion`.
+- `src/helpers/sesion.js`: sesión en `sessionStorage` bajo la clave `userKey` (`{ uid, email, rol, token }`) y control de vencimiento del JWT.

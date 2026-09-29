@@ -1,13 +1,14 @@
 import emailjs from "@emailjs/browser";
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { Button, Form } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 
+const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
 const Contacto = () => {
-  const URLService = import.meta.env.SERVICE
-  const URLTemplate = import.meta.env.TEMPLATE
-  const URLPublicKey = import.meta.env.PUBLIC_KEY
   const form = useRef();
   const {
     register,
@@ -15,10 +16,21 @@ const Contacto = () => {
     formState: { errors },
     reset,
   } = useForm();
-  const sendEmail = (e) => {
+  const sendEmail = () => {
+    if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
+      console.error(
+        "Faltan VITE_EMAILJS_SERVICE_ID / VITE_EMAILJS_TEMPLATE_ID / VITE_EMAILJS_PUBLIC_KEY"
+      );
+      Swal.fire({
+        icon: "error",
+        title: "Formulario no disponible",
+        text: "El envío de mensajes no está configurado en este momento. Escribinos por otro medio o intentá más tarde.",
+      });
+      return;
+    }
     emailjs
-      .sendForm(URLService, URLTemplate, form.current, {
-        publicKey: URLPublicKey,
+      .sendForm(SERVICE_ID, TEMPLATE_ID, form.current, {
+        publicKey: PUBLIC_KEY,
       })
       .then(
         () => {
@@ -30,6 +42,7 @@ const Contacto = () => {
           reset();
         },
         (error) => {
+          console.error("Error de EmailJS:", error);
           Swal.fire({
             icon: "error",
             title: "Oops...",

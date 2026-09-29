@@ -1,9 +1,6 @@
 import { Button } from "react-bootstrap";
 import Swal from "sweetalert2";
-import {
-  eliminarHabitacionAdmin,
-  listarHabitacionesAdmin,
-} from "../helpers/queries.js";
+import { eliminarHabitacionAdmin } from "../helpers/queries.js";
 import { Link } from "react-router-dom";
 
 
@@ -20,22 +17,22 @@ const ItemHabitacion = ({ fila, setListaHabitaciones, habitacion }) => {
       cancelButtonText: "Cancelar",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        const respuesta = await eliminarHabitacionAdmin(habitacion._id);
-        if (respuesta.status === 200) {
+        const { ok, status, datos } = await eliminarHabitacionAdmin(habitacion.id);
+        if (ok) {
           Swal.fire({
             title: "Eliminado",
-            text: `La habitacion fue eliminada correctamente`,
+            text: datos?.mensaje || "La habitacion fue eliminada correctamente",
             icon: "success",
           });
-          const habitacionesAPI = await listarHabitacionesAdmin();
-          if (habitacionesAPI.status === 200) {
-            const habitacionesActualizadas = await habitacionesAPI.json();
-            setListaHabitaciones(habitacionesActualizadas);
-          }
-        } else {
+          setListaHabitaciones((habitacionesPrevias) =>
+            habitacionesPrevias.filter((item) => item.id !== habitacion.id)
+          );
+        } else if (status !== 401) {
           Swal.fire({
             title: "Ocurrio un error",
-            text: `La habitación no pudo ser eliminada, intenta de nuevo en unos minutos`,
+            text:
+              datos?.mensaje ||
+              "La habitación no pudo ser eliminada, intenta de nuevo en unos minutos",
             icon: "error",
           });
         }
@@ -60,7 +57,7 @@ const ItemHabitacion = ({ fila, setListaHabitaciones, habitacion }) => {
       <td>
         <Link
           className="btn btn-warning  me-lg-2"
-          to={`/administrador/editar/${habitacion._id}`}
+          to={`/administrador/editar/${habitacion.id}`}
         >
           <i className="bi bi-pencil-square"></i>
         </Link>

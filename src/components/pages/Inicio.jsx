@@ -5,20 +5,11 @@ import {
   segundaImg,
   terceraImg,
 } from "../assets/imagenes.js";
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "react-bootstrap";
 
-
-const Inicio = () => {
-  const [usuarioLogueado, setUsuarioLogueado] = useState(false)
+// La sesión llega por props desde App.jsx (única fuente de verdad).
+const Inicio = ({ usuarioLogueado }) => {
   const navegacion = useNavigate()
-useEffect(()=>{
-  const usuario = sessionStorage.getItem("userKey");
-  if (usuario) {
-    setUsuarioLogueado(true)
-  }
-},[])
   return (
     <div className="flex-grow-1">
       <Carousel interval={null}>

@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Row, Container, Form, Button, Card } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { login, registro } from "../../helpers/queries.usuarios.js";
+import { esAdmin, guardarSesion } from "../../helpers/sesion.js";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import logo from "../assets/logo-hotelcode.jpg";
@@ -19,73 +20,49 @@ const Login = ({ setUsuarioLogueado }) => {
   } = useForm();
 
   const onsubmit = async (usuario) => {
-    try {
-      if (registrarse) {
-        const respuesta = await registro(usuario);
-        const datos = await respuesta.json();
-
-        if (respuesta.status === 200) {
-          Swal.fire({
-            title: "Registro Exitoso",
-            text: `Gracias por unirte a Hotel Code, ya puedes Iniciar Sesión`,
-            icon: "success",
-          }).then(() => {
-            reset();
-            setRegistrarse(false);
-          });
-        } else {
-          Swal.fire({
-            title: "Error",
-            text: datos.mensaje || "No se pudo completar el registro",
-            icon: "error",
-          });
-        }
+    if (registrarse) {
+      const { ok, datos } = await registro(usuario);
+      if (ok) {
+        Swal.fire({
+          title: "Registro Exitoso",
+          text: datos?.mensaje || "Gracias por unirte a Hotel Code, ya puedes Iniciar Sesión",
+          icon: "success",
+        }).then(() => {
+          reset();
+          setRegistrarse(false);
+        });
       } else {
-        const respuesta = await login(usuario);
-        if (respuesta.ok) {
-          const datos = await respuesta.json();
-          Swal.fire({
-            title: "Usuario Logueado",
-            text: `Bienvenido a HotelCode`,
-            icon: "success",
-          });
-          
-          const tiempoExpiracion = Date.now() + 3540000;
-          sessionStorage.setItem('token', datos.token);
-          sessionStorage.setItem('expiracionToken', tiempoExpiracion);
-
-          setUsuarioLogueado({
-            email: datos.email,
-            token: datos.token,
-            rol: datos.rol,
-          });
-          sessionStorage.setItem(
-            "userKey",
-            JSON.stringify({
-              email: datos.email,
-              token: datos.token,
-              rol: datos.rol,
-            })
-          );
-          if (datos.rol === "admin") {
-            navegacion("/administrador");
-          } else {
-            navegacion("/catalogo");
-          }
-        } else {
-          Swal.fire({
-            title: "Error",
-            text: datos.mensaje || "Email o Password incorrecto",
-            icon: "error",
-          });
-        }
+        Swal.fire({
+          title: "Error",
+          text: datos?.mensaje || "No se pudo completar el registro",
+          icon: "error",
+        });
       }
-    } catch (error) {
+      return;
+    }
+
+    const { ok, status, datos } = await login(usuario);
+    if (ok) {
+      const sesion = guardarSesion(datos);
+      setUsuarioLogueado(sesion);
       Swal.fire({
-        title: "Ocurrió un error",
-        text: registrarse
-          ? "No se pudo completar el registro"
-          : "Email o Password incorrecto",
+        title: "Usuario Logueado",
+        text: `Bienvenido a HotelCode`,
+        icon: "success",
+      });
+      navegacion(esAdmin(sesion) ? "/administrador" : "/catalogo");
+    } else if (status === 429) {
+      Swal.fire({
+        title: "Demasiados intentos",
+        text:
+          datos?.mensaje ||
+          "Superaste el límite de intentos de inicio de sesión. Esperá unos minutos e intentá de nuevo.",
+        icon: "warning",
+      });
+    } else {
+      Swal.fire({
+        title: "Error",
+        text: datos?.mensaje || "Email o Password incorrecto",
         icon: "error",
       });
     }
@@ -203,7 +180,7 @@ const Login = ({ setUsuarioLogueado }) => {
                         },
                         maxLength: {
                           value: 100,
-                          message: "La contraseña no debe contener más de 320 caracteres",
+                          message: "La contraseña no debe contener más de 100 caracteres",
                         },
                         pattern: {
                           value:

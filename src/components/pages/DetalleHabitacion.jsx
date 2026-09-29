@@ -1,109 +1,112 @@
-import React, { useEffect, useState } from "react";
-import { buscarHabitacionAPI } from "../../helpers/queries.js";
+import { useEffect, useState } from "react";
+import { obtenerHabitacion } from "../../helpers/queries.js";
+import { crearReserva } from "../../helpers/queries.reserva.js";
+import { hoyLocal } from "../../helpers/fechas.js";
 import { Button, Card, Form } from "react-bootstrap";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
-const URLReserva = import.meta.env.VITE_API_HABITACION;
-const DetalleHabitacion = () => {
+
+const DetalleHabitacion = ({ usuarioLogueado }) => {
   const { id } = useParams();
+  const navegacion = useNavigate();
   const [habitacion, setHabitacion] = useState({});
+  const [mensajeError, setMensajeError] = useState("");
   const [fechaEntradaa, setFechaEntradaa] = useState("");
   const [fechaSalidaa, setFechaSalidaa] = useState("");
-  const today = new Date().toISOString().split("T")[0];
-  const [errores, setErrores]=useState("")
+  const [errores, setErrores] = useState({});
+  const [reservando, setReservando] = useState(false);
+  const today = hoyLocal();
 
   useEffect(() => {
-    const obtenerHabitacion = async () => {
-      try {
-        const response = await buscarHabitacionAPI(id);
-        if (response.ok) {
-          const habi = await response.json();
-          setHabitacion(habi);
-        } else {
-          console.error("Error en la respuesta de la API");
-        }
-      } catch (error) {
-        console.error("Error al obtener detalles de la habitación");
+    const cargarHabitacion = async () => {
+      setMensajeError("");
+      const { ok, status, datos } = await obtenerHabitacion(id);
+      if (ok) {
+        setHabitacion(datos || {});
+      } else {
+        setMensajeError(
+          status === 404
+            ? "La habitación que buscás no existe."
+            : datos?.mensaje || "No se pudo cargar la habitación."
+        );
       }
     };
-    obtenerHabitacion();
+    cargarHabitacion();
   }, [id]);
 
   const handleReserva = async (e) => {
     e.preventDefault();
 
-let errores = {}
-if (!fechaEntradaa) {
-  errores.fechaEntrada = "Por favor ingrese una fecha de entrada.";
-  
-}
-if (!fechaSalidaa) {
-  errores.fechaSalida="Por favor ingrese una fecha de entrada."
-  
-}
+    const nuevosErrores = {};
+    if (!fechaEntradaa) {
+      nuevosErrores.fechaEntrada = "Por favor ingrese una fecha de entrada.";
+    } else if (fechaEntradaa < today) {
+      nuevosErrores.fechaEntrada =
+        "La fecha de entrada no puede ser anterior a hoy.";
+    }
+    if (!fechaSalidaa) {
+      nuevosErrores.fechaSalida = "Por favor ingrese una fecha de salida.";
+    } else if (fechaEntradaa && fechaSalidaa <= fechaEntradaa) {
+      nuevosErrores.fechaSalida =
+        "La fecha de salida debe ser posterior a la fecha de entrada.";
+    }
 
- if (fechaEntradaa && fechaSalidaa && fechaEntradaa > fechaSalidaa) {
-   errores.fechaSalida =
-     "La fecha de salida debe ser posterior a la fecha de entrada.";
- }
+    setErrores(nuevosErrores);
+    if (Object.keys(nuevosErrores).length > 0) return;
 
-if (Object.keys(errores).length > 0) {
-  setErrores(errores);
-  return;
-} else {
-  setErrores({});
-}
-
-    const usuario = JSON.parse(sessionStorage.getItem("userKey"));
-
-    if (!usuario) {
+    if (!usuarioLogueado) {
       Swal.fire({
-        icon: "error",
-        title: "Error",
+        icon: "info",
+        title: "Iniciá sesión",
         text: "Debes iniciar sesión para reservar una habitación.",
-        confirmButtonText: "Aceptar",
+        showCancelButton: true,
+        confirmButtonText: "Iniciar sesión",
+        cancelButtonText: "Cancelar",
+      }).then((resultado) => {
+        if (resultado.isConfirmed) navegacion("/login");
       });
       return;
     }
-    const reservaData = {
-      usuarioEmail: usuario.email,
-      habitacionID: habitacion._id,
+
+    setReservando(true);
+    const { ok, status, datos } = await crearReserva({
+      habitacionID: habitacion.id,
       fechaEntrada: fechaEntradaa,
       fechaSalida: fechaSalidaa,
-    };
-    try {
-      const respuesta = await fetch(`${URLReserva}/reserva`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-token": `${usuario.token}`,
-        },
-        body: JSON.stringify(reservaData),
-      });
+    });
+    setReservando(false);
 
-      const datos = await respuesta.json();
-
-      if (respuesta.ok) {
-        Swal.fire({
-          title: "Reserva Exitosa",
-          text: `Tu reserva ha sido confirmada.`,
-          icon: "success",
-        });
-      } else {
-        Swal.fire({
-          title: "Error",
-          text: datos.mensaje || "No se pudo realizar la reserva",
-          icon: "error",
-        });
-      }
-    } catch (error) {
+    if (ok) {
+      setFechaEntradaa("");
+      setFechaSalidaa("");
       Swal.fire({
-        title: "Error",
-        text: "Ocurrió un error al realizar la reserva. Inténtalo nuevamente.",
+        title: "Reserva Exitosa",
+        text: `Tu reserva ha sido confirmada.`,
+        icon: "success",
+      });
+    } else if (status !== 401) {
+      // El 401 (sesión vencida) ya lo maneja TiempoToken.
+      Swal.fire({
+        title: status === 409 ? "Fechas no disponibles" : "Error",
+        text: datos?.mensaje || "No se pudo realizar la reserva",
         icon: "error",
       });
     }
   };
+
+  if (mensajeError) {
+    return (
+      <div className="backQS flex-grow-1">
+        <div className="container text-center">
+          <h1 className="my-3">Detalles de la habitación</h1>
+          <div className="alert alert-warning">{mensajeError}</div>
+          <Button variant="dark" onClick={() => navegacion("/catalogo")}>
+            Volver al catálogo
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="backQS flex-grow-1">
@@ -191,8 +194,13 @@ if (Object.keys(errores).length > 0) {
               </Form.Group>
 
               <div className="d-flex align-content-md-end flex-md-wrap justify-content-end my-2">
-                <Button variant="dark" type="submit" className="mt-2">
-                  Reservar
+                <Button
+                  variant="dark"
+                  type="submit"
+                  className="mt-2"
+                  disabled={reservando || !habitacion.id}
+                >
+                  {reservando ? "Reservando..." : "Reservar"}
                 </Button>
               </div>
             </Form>

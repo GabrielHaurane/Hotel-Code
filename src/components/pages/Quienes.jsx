@@ -1,4 +1,3 @@
-import React from "react";
 import { Card } from "react-bootstrap";
 import gabrielH from "../assets/Gabriel_Haurane.jpg";
 import augustoB from "../assets/Augusto-Brito.jpg";

@@ -13,19 +13,17 @@ Cada máxima cita el archivo/patrón que la sostiene. No agregar reglas sin evid
 
 ## Máximas
 
-1. **El backend se consume solo desde `src/helpers/queries*.js` con `fetch` nativo.** Ningún componente hace `fetch`/`axios` propio. — `src/helpers/queries.js`, `queries.reserva.js`, `queries.usuarios.js`
-   - Excepción viva que **no** hay que imitar: `DetalleHabitacion.jsx:75` hace `fetch` inline. Es deuda; endpoints nuevos van en `helpers/`.
+1. **El backend se consume solo a través de `peticion()` de `src/helpers/api.js`**, envuelta por funciones de dominio en `src/helpers/queries*.js`. El único `fetch` del proyecto está en `api.js`; ningún componente hace `fetch`/`axios` propio. `peticion` nunca lanza y devuelve siempre `{ ok, status, datos }`; el componente chequea `ok` antes de usar `datos` y muestra `datos.mensaje` del back en los errores. — `api.js`, `queries.js`, `queries.reserva.js`, `queries.usuarios.js`
 
-2. **Las URLs de API salen siempre de `import.meta.env.VITE_API_*`.** Nunca hardcodear una URL de backend. Toda variable de entorno leída en el cliente **debe** empezar con `VITE_`. — `src/helpers/queries.js:1-2`
-   - Bug activo que lo demuestra: `Contacto.jsx:8-10` lee `import.meta.env.SERVICE/TEMPLATE/PUBLIC_KEY` sin prefijo `VITE_` → siempre `undefined`. No repetir.
+2. **La URL del backend sale siempre de `import.meta.env.VITE_API_URL`** (única variable de API; fallback `http://localhost:4000/api` solo para desarrollo). Nunca hardcodear una URL de backend en otro lado. Toda variable de entorno leída en el cliente **debe** empezar con `VITE_` (ej. `VITE_EMAILJS_*` en `Contacto.jsx`). — `api.js`, `netlify.toml`, `.env.example`
 
-3. **El token JWT vive en `sessionStorage` bajo la clave `userKey`** (objeto JSON `{ email, token, rol }`), más las claves auxiliares `token` y `expiracionToken`. Login escribe las tres; logout y expiración borran las tres. Cambiar el nombre de una clave sin cambiarlas todas rompe la sesión. — `Login.jsx:53-69`, `Menu.jsx:6-12`, `TiempoToken.jsx:18-21`
+3. **La sesión vive en `sessionStorage` bajo UNA sola clave `userKey`** (objeto JSON `{ uid, email, rol, token }`) y solo se lee/escribe mediante `src/helpers/sesion.js` (`guardarSesion`, `obtenerSesion`, `borrarSesion`, `tokenExpirado`, `esAdmin`). No hay claves auxiliares: el vencimiento se toma del `exp` real del JWT. — `sesion.js`, `Login.jsx`, `Menu.jsx`, `TiempoToken.jsx`
 
-4. **Nunca acceder a `sessionStorage.getItem("userKey")` sin guarda de null.** El patrón `JSON.parse(sessionStorage.getItem("userKey")).token` tira excepción si no hay sesión. Usar `JSON.parse(...) || null` y cortar antes. — patrón correcto en `RutasProtegidas.jsx:4`, `Menu.jsx:13`; frágil en `queries.js:40,59,84,107,150` y `queries.reserva.js:9`
+4. **Nadie fuera de `sesion.js` toca `sessionStorage`.** Los componentes leen la sesión de la prop `usuarioLogueado` (estado de `App.jsx`, objeto o `null`); `obtenerSesion()` ya devuelve `null` si no hay sesión o está corrupta. Un 401 en una petición autenticada cierra la sesión y manda a `/login` (`api.js` → evento `sesion-vencida` → `TiempoToken`). — `sesion.js`, `api.js`, `TiempoToken.jsx`
 
-5. **El token se manda como header `x-token`** (no `Authorization: Bearer`). Todo endpoint autenticado usa `"x-token": <token>`. — `queries.js:40,59,84`, `queries.reserva.js:9,53,67`, `queries.usuarios.js:52,67,81`
+5. **El token se manda como header `x-token`** (no `Authorization: Bearer`). Lo agrega `peticion` cuando se llama con `auth: true`. — `api.js`
 
-6. **Las rutas de `/administrador` van envueltas en `<RutasProtegidas>` y viven en `RutasAdmin`.** Ninguna vista de admin se expone sin esa guarda. — `App.jsx:54-62`, `routes/RutasAdmin.jsx`
+6. **Las rutas de `/administrador` van envueltas en `<RutasProtegidas soloAdmin>` y viven en `RutasAdmin`**: sin sesión redirige a `/login`, sin rol admin a `/`. `/reservas` va en `<RutasProtegidas>` (requiere sesión). Ninguna vista privada se expone sin esa guarda. — `App.jsx`, `routes/RutasProtegidas.jsx`, `routes/RutasAdmin.jsx`
 
 7. **Toda confirmación destructiva (borrar) pasa por un `Swal.fire` con `showCancelButton`.** No hay borrado sin confirmación previa. — `ItemHabitacion.jsx:12-21`, `ItemUsuarios.jsx:14-23`, `ItemReservasAdmin.jsx:21-30`, `ItemReservas.jsx:19-28`
 

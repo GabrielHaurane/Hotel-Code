@@ -1,4 +1,3 @@
-import React from 'react';
 import error from '../assets/error404.jpg'
 import { Button } from 'react-bootstrap';
 const Error404 = () => {

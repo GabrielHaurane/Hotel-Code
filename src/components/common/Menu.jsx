@@ -1,17 +1,15 @@
 import { Container, Nav, Navbar } from "react-bootstrap";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/logo-hotelcode.jpg";
+import { borrarSesion, esAdmin } from "../../helpers/sesion.js";
+
 const Menu = ({ usuarioLogueado, setUsuarioLogueado }) => {
   const navegacion = useNavigate();
   const logout = () => {
-    sessionStorage.removeItem("userKey");
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("expiracionToken");
-    setUsuarioLogueado("");
+    borrarSesion();
+    setUsuarioLogueado(null);
     navegacion("/");
   };
-  const userKey = JSON.parse(sessionStorage.getItem("userKey"));
-  const rol = userKey ? userKey.rol : null;
 
   return (
     <>
@@ -70,16 +68,14 @@ const Menu = ({ usuarioLogueado, setUsuarioLogueado }) => {
                 </NavLink>
               )}
 
-              {usuarioLogueado !== "" && (
-                <NavLink
-                  end
-                  className="nav-link text-white d-flex align-self-center text-center"
-                  to="/catalogo"
-                >
-                  Catalogo de habitaciones
-                </NavLink>
-              )}
-              {rol === "admin" ? (
+              <NavLink
+                end
+                className="nav-link text-white d-flex align-self-center text-center"
+                to="/catalogo"
+              >
+                Catalogo de habitaciones
+              </NavLink>
+              {esAdmin(usuarioLogueado) ? (
                 <>
                   <NavLink
                     end
@@ -95,7 +91,7 @@ const Menu = ({ usuarioLogueado, setUsuarioLogueado }) => {
                     Cerrar Sesion
                   </button>
                 </>
-              ) : usuarioLogueado !== "" ? (
+              ) : usuarioLogueado ? (
                 <>
                   <button
                     className="nav-link text-white d-flex align-self-center text-center"
