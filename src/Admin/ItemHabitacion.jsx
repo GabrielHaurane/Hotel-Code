@@ -43,26 +43,48 @@ const ItemHabitacion = ({ fila, setListaHabitaciones, habitacion }) => {
 
   return (
     <tr className="text-center">
-      <td>{fila}</td>
-      <td>{habitacion.tipoHabitacion}</td>
-      <td>
+      <td data-label="Fila" className="celda-fila celda-fila--badge">
+        {fila}
+      </td>
+      <td data-label="Tipo de Habitación" className="celda-titulo">
+        {habitacion.tipoHabitacion}
+      </td>
+      <td data-label="Imagen" className="celda-imagen">
         <img
           src={habitacion.imagen}
           alt="imagen de una habitacion de hotel"
           className="img-admin object-fit-cover"
         />
       </td>
-      <td>{habitacion.precio} usd</td>
-      <td>{habitacion.disponibilidad ? "Disponible" : "No disponible"}</td>
-      <td>
+      <td data-label="Precio" className="celda-precio">
+        {habitacion.precio} usd
+      </td>
+      <td data-label="Disponibilidad">
+        <span
+          className={`badge ${
+            habitacion.disponibilidad ? "text-bg-success" : "text-bg-secondary"
+          }`}
+        >
+          {habitacion.disponibilidad ? "Disponible" : "No disponible"}
+        </span>
+      </td>
+      <td data-label="Opciones" className="celda-acciones">
         <Link
           className="btn btn-warning  me-lg-2"
           to={`/administrador/editar/${habitacion.id}`}
+          aria-label="Editar habitación"
         >
           <i className="bi bi-pencil-square"></i>
+          <span className="texto-accion">Editar</span>
         </Link>
-        <Button variant="danger" onClick={eliminarHabitacion} className="my-3">
+        <Button
+          variant="danger"
+          onClick={eliminarHabitacion}
+          className="my-3"
+          aria-label="Borrar habitación"
+        >
           <i className="bi bi-trash"></i>
+          <span className="texto-accion">Borrar</span>
         </Button>
       </td>
     </tr>

@@ -45,10 +45,10 @@ const ItemReservasAdmin = ({reserva, fila, setListaReservas}) => {
 
 return (
   <tr>
-    <td className='text-center'>{fila}</td>
-    <td className='text-center'>{reserva.usuarioEmail}</td>
-    <td className='text-center'>{habitacion?.tipoHabitacion || "-"}</td>
-    <td className='text-center'>
+    <td data-label="Fila" className='text-center celda-fila celda-fila--badge'>{fila}</td>
+    <td data-label="Usuario" className='text-center'>{reserva.usuarioEmail}</td>
+    <td data-label="Tipo de Habitación" className='text-center celda-titulo'>{habitacion?.tipoHabitacion || "-"}</td>
+    <td data-label="Imagen" className='text-center celda-imagen'>
       {habitacion?.imagen ? (
         <img
           src={habitacion.imagen}
@@ -59,11 +59,12 @@ return (
         "-"
       )}
     </td>
-    <td className='text-center'>{formatearFecha(fechaEntrada)}</td>
-    <td className='text-center'>{formatearFecha(fechaSalida)}</td>
-    <td className='text-center'>
-      <Button variant="danger" onClick={eliminarReserva} className='ms-lg-3 mt-4'>
+    <td data-label="Entrada" className='text-center celda-fecha'>{formatearFecha(fechaEntrada)}</td>
+    <td data-label="Salida" className='text-center celda-fecha'>{formatearFecha(fechaSalida)}</td>
+    <td data-label="Opciones" className='text-center celda-acciones'>
+      <Button variant="danger" onClick={eliminarReserva} className='ms-lg-3 mt-4' aria-label="Borrar reserva">
       <i className="bi bi-trash"></i>
+      <span className="texto-accion">Borrar reserva</span>
       </Button>
     </td>
   </tr>

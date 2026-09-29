@@ -74,9 +74,11 @@ const ItemUsuarios = ({ usuario, fila, setListaUsuarios }) => {
 
   return (
     <tr className="text-center">
-      <td>{fila}</td>
-      <td>{usuario.email}</td>
-      <td className="col-lg-4">
+      <td data-label="Fila" className="celda-fila">
+        {fila}
+      </td>
+      <td data-label="Email">{usuario.email}</td>
+      <td data-label="Permisos" className="col-lg-4 celda-bloque">
         <Form.Select
         className="text-center"
           value={nuevoRol}
@@ -93,9 +95,14 @@ const ItemUsuarios = ({ usuario, fila, setListaUsuarios }) => {
           Cambiar Rol
         </Button>
       </td>
-      <td>
-        <Button variant="danger" onClick={eliminarUsuario}>
+      <td data-label="Opciones" className="celda-acciones">
+        <Button
+          variant="danger"
+          onClick={eliminarUsuario}
+          aria-label="Borrar usuario"
+        >
           <i className="bi bi-trash"></i>
+          <span className="texto-accion">Borrar usuario</span>
         </Button>
       </td>
     </tr>

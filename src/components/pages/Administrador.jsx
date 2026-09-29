@@ -151,8 +151,8 @@ const Administrador = () => {
               <i className="bi bi-file-earmark-plus"></i>
             </Link>
           </div>
-          <div className="tabla-scroll">
-            <Table responsive striped bordered hover>
+          <div className="tabla-scroll tabla-cards-contenedor">
+            <Table responsive striped bordered hover className="tabla-cards">
               <thead>
                 <tr className="text-center">
                   <th>Fila</th>
@@ -200,8 +200,8 @@ const Administrador = () => {
           <div className="d-flex mt-lg-4">
             <h2 className="display-4 ">Usuarios</h2>
           </div>
-          <div className="tabla-scroll">
-            <Table responsive striped bordered hover className="tabla">
+          <div className="tabla-scroll tabla-cards-contenedor">
+            <Table responsive striped bordered hover className="tabla tabla-cards">
               <thead>
                 <tr className="text-center">
                   <th>Fila</th>
@@ -247,8 +247,8 @@ const Administrador = () => {
           <div className="d-flex mt-lg-4">
             <h2 className="display-4 ">Reservas</h2>
           </div>
-          <div className="tabla-scroll">
-            <Table responsive striped bordered hover className="tabla">
+          <div className="tabla-scroll tabla-cards-contenedor">
+            <Table responsive striped bordered hover className="tabla tabla-cards">
               <thead>
                 <tr className="text-center">
                   <th>Fila</th>

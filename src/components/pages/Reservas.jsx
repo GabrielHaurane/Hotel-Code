@@ -34,7 +34,7 @@ const Reservas = () => {
     <div className="backQS flex-grow-1">
       <div className=" container">
         <h1 className="text-center my-3">Mis Reservas</h1>
-        <div className="tabla-scroll">
+        <div className="tabla-scroll tabla-cards-contenedor">
           {cargando ? (
             <div className="text-center my-5">
               <div className="spinner-border text-warning" role="status">
@@ -42,7 +42,7 @@ const Reservas = () => {
               </div>
             </div>
           ) : (
-            <Table responsive striped>
+            <Table responsive striped className="tabla-cards">
               <thead>
                 <tr>
                   <th className="text-center">Fila</th>

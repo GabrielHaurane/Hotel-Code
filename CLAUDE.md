@@ -111,7 +111,8 @@ Rutas: `/reservas` va en `<RutasProtegidas usuarioLogueado>` (requiere sesión);
 
 ## Temas / estilos
 - **Un solo archivo global: `src/App.css`.** Ahí viven `:root` (variables de marca) y todas las clases custom. No crear archivos `.css` por componente.
-- Paleta en `App.css:12-20`: `--dorado-metalico #d4af37`, `--azul-marino #1c3d5a`, `--gris-plomo #2f2f2f`, `--blanco-marfil #f8f4e3`, `--beige-champagne`, `--verde-esmeralda`, `--morado`.
+- Paleta en `App.css:12-28`: `--dorado-metalico #d4af37`, `--azul-marino #1c3d5a`, `--gris-plomo #2f2f2f`, `--blanco-marfil #f8f4e3`, `--beige-champagne`, `--verde-esmeralda`, `--morado`. Tonos complementarios (navbar/footer): `--dorado-claro`, `--grafito`, `--noche`, `--noche-profunda`, `--texto-suave`, `--transicion-suave`.
+- Tablas: usar `<Table className="tabla-cards">` + `data-label` en cada `<td>`; en mobile (< 768px) cada fila se ve como card (estilos al final de `App.css`).
 - Fuente: Poppins (importada por `@import` en `App.css:1`).
 - Layout: Bootstrap utilities en el `className`. El shell usa flexbox column con `#root { min-height:100vh }` + `.flex-grow-1`/`.mainSection` para empujar el footer abajo.
 - Clases custom con nombres crípticos ya existentes (`backC`, `backS`, `backQ`, `backQS`, `tama1`) — reutilizalas si aplican, pero para clases **nuevas** usá nombres semánticos y variables CSS, no hex nuevos. Ver `.claude/rules/estilos-theming.md`.

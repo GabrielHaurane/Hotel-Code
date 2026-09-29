@@ -1,81 +1,111 @@
+import { Col, Container, Row } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import logo from "../assets/logo-hotelcode.jpg";
 
+const linksRapidos = [
+  { to: "/", texto: "Inicio" },
+  { to: "/quienessomos", texto: "Quiénes somos" },
+  { to: "/galeria", texto: "Servicios" },
+  { to: "/catalogo", texto: "Habitaciones" },
+  { to: "/ubicacion", texto: "Ubicación" },
+  { to: "/contacto", texto: "Contacto" },
+];
+
+const redes = [
+  { href: "https://www.facebook.com", icono: "bi-facebook", nombre: "Facebook" },
+  { href: "https://www.instagram.com", icono: "bi-instagram", nombre: "Instagram" },
+  { href: "https://www.twitter.com", icono: "bi-twitter-x", nombre: "X (Twitter)" },
+  { href: "https://www.linkedin.com", icono: "bi-linkedin", nombre: "LinkedIn" },
+];
+
 const Footer = () => {
+  const anio = new Date().getFullYear();
+
   return (
-    <div className=" backC py-4 d-flex align-item-center justify-content-center">
-      <div className="d-flex flex-column flex-md-row align-items-center mb-4 w-100 flex-wrap justify-content-around">
-        <div className="d-flex justify-content-around align-items-center col-12">
-        <div className="d-flex align-items-center me-md-5 mb-3 mb-md-0 ">
-          <img
-            src={logo}
-            alt="logo Hotel Code"
-            className="img-fluid"
-            width={65}
-          />
-          <div className="ms-3">
-            <p className="text-white m-0">Trabaja con nosotros:</p>
-            <p className="text-white m-0">Tel: +54 381 2584026</p>
-            <p className="text-white m-0">Email: hotelcod3@gmail.com</p>
-          </div>
-        </div>
-        
-        <div className="d-flex mb-4 flex-wrap">
-          <a
-            href="https://www.facebook.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white mx-2"
-          >
-            <i className="bi bi-facebook fs-4"></i>
-          </a>
-          <a
-            href="https://www.instagram.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white mx-2"
-          >
-            <i className="bi bi-instagram fs-4"></i>
-          </a>
-          <a
-            href="https://www.twitter.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white mx-2"
-          >
-            <i className="bi bi-twitter fs-4"></i>
-          </a>
-          <a
-            href="https://www.linkedin.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white mx-2"
-          >
-            <i className="bi bi-linkedin fs-4"></i>
-          </a>
-        </div>
-        </div>
-        
-        <div className="text-center text-white mt-md-3 container col-12">
+    <footer className="hc-footer">
+      <Container className="py-5">
+        <Row className="gy-4 text-center text-md-start">
+          <Col xs={12} md={6} lg={4}>
+            <Link to="/" className="hc-footer-brand">
+              <img
+                src={logo}
+                alt="Logo de Hotel Code"
+                className="hc-brand-logo"
+                width={56}
+                height={56}
+              />
+              <span className="hc-brand-text">
+                Hotel <span className="hc-accent">Code</span>
+              </span>
+            </Link>
+            <p className="hc-footer-text mt-3 mb-0">
+              Confort, elegancia y atención personalizada para que tu estadía
+              sea inolvidable.
+            </p>
+          </Col>
+
+          <Col xs={12} md={6} lg={2}>
+            <h2 className="hc-footer-title">Enlaces</h2>
+            <ul className="list-unstyled hc-footer-links mb-0">
+              {linksRapidos.map((link) => (
+                <li key={link.to}>
+                  <Link to={link.to}>{link.texto}</Link>
+                </li>
+              ))}
+            </ul>
+          </Col>
+
+          <Col xs={12} md={6} lg={3}>
+            <h2 className="hc-footer-title">Contacto</h2>
+            <ul className="list-unstyled hc-footer-contacto mb-0">
+              <li>
+                <i className="bi bi-telephone" aria-hidden="true"></i>
+                <a href="tel:+543812584026">+54 381 2584026</a>
+              </li>
+              <li>
+                <i className="bi bi-envelope" aria-hidden="true"></i>
+                <a href="mailto:hotelcod3@gmail.com">hotelcod3@gmail.com</a>
+              </li>
+              <li>
+                <i className="bi bi-geo-alt" aria-hidden="true"></i>
+                <Link to="/ubicacion">Cómo llegar</Link>
+              </li>
+              <li>
+                <i className="bi bi-briefcase" aria-hidden="true"></i>
+                <Link to="/contacto">Trabajá con nosotros</Link>
+              </li>
+            </ul>
+          </Col>
+
+          <Col xs={12} md={6} lg={3}>
+            <h2 className="hc-footer-title">Seguinos</h2>
+            <div className="hc-redes justify-content-center justify-content-md-start">
+              {redes.map((red) => (
+                <a
+                  key={red.nombre}
+                  href={red.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hc-red"
+                  aria-label={`Hotel Code en ${red.nombre} (se abre en una pestaña nueva)`}
+                  title={red.nombre}
+                >
+                  <i className={`bi ${red.icono}`} aria-hidden="true"></i>
+                </a>
+              ))}
+            </div>
+          </Col>
+        </Row>
+      </Container>
+
+      <div className="hc-footer-bottom">
+        <Container className="py-3 text-center">
           <p className="m-0">
-            © {new Date().getFullYear()} Hotel Code. Todos los derechos
-            reservados.
+            © {anio} Hotel Code. Todos los derechos reservados.
           </p>
-          <a
-            href="/terminos-y-condiciones"
-            className="text-white text-decoration-none"
-          >
-            Términos y Condiciones
-          </a>
-          <a
-            href="/politica-privacidad"
-            className="text-white text-decoration-none"
-          >
-            Política de Privacidad
-          </a>
-        </div>
-        
+        </Container>
       </div>
-    </div>
+    </footer>
   );
 };
 

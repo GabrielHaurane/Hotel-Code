@@ -17,6 +17,13 @@
   --beige-champagne: #e0c097;
   --verde-esmeralda: #2e8b57;
     --morado: #dadada;
+  /* Tonos complementarios para navbar y footer */
+  --dorado-claro: #e6c65c;
+  --grafito: #1f1f1f;
+  --noche: #141a22;
+  --noche-profunda: #0e131a;
+  --texto-suave: #c9c4b4;
+  --transicion-suave: 0.25s ease;
 }
 .backC{
     background-color: var(--gris-plomo);
@@ -253,4 +260,531 @@ color: white;
       width: 50%;
       font-size: 35px;
     }
+}
+
+/* ===================== Navbar y Footer (Menu.jsx / Footer.jsx) ===================== */
+/* ---------- Marca (compartida) ---------- */
+.hc-brand,
+.hc-footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+}
+
+.hc-brand-logo {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--dorado-metalico);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.hc-brand-text {
+  color: var(--blanco-marfil);
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.hc-accent {
+  color: var(--dorado-metalico);
+}
+
+/* ---------- Navbar ---------- */
+.hc-navbar {
+  background: linear-gradient(180deg, var(--gris-plomo), var(--grafito));
+  border-bottom: 1px solid rgba(212, 175, 55, 0.35);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  z-index: 1030;
+}
+
+.hc-brand:hover .hc-brand-text,
+.hc-brand:focus .hc-brand-text {
+  color: #fff;
+}
+
+.hc-toggler {
+  border-color: rgba(212, 175, 55, 0.6);
+}
+
+.hc-toggler:focus {
+  box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.4);
+}
+
+.hc-nav {
+  gap: 0.15rem;
+}
+
+.hc-navbar .hc-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  position: relative;
+  color: var(--blanco-marfil);
+  font-weight: 500;
+  padding: 0.5rem 0.8rem;
+  border-radius: 0.5rem;
+  transition: color var(--transicion-suave), background-color var(--transicion-suave);
+}
+
+.hc-navbar .hc-nav-link i {
+  color: var(--dorado-metalico);
+  font-size: 1rem;
+  transition: transform var(--transicion-suave);
+}
+
+.hc-navbar .hc-nav-link:hover,
+.hc-navbar .hc-nav-link:focus-visible {
+  color: #fff;
+  background-color: rgba(212, 175, 55, 0.12);
+}
+
+.hc-navbar .hc-nav-link:hover i {
+  transform: translateY(-1px);
+}
+
+.hc-navbar .hc-nav-link.active {
+  color: var(--dorado-metalico);
+  background-color: rgba(212, 175, 55, 0.14);
+}
+
+.hc-btn-sesion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-left: 0.5rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 2rem;
+  font-weight: 600;
+  background-color: var(--dorado-metalico);
+  color: var(--grafito);
+  border: 2px solid var(--dorado-metalico);
+  transition: background-color var(--transicion-suave), color var(--transicion-suave),
+    box-shadow var(--transicion-suave);
+}
+
+.hc-btn-sesion:hover,
+.hc-btn-sesion:focus-visible,
+.hc-btn-sesion.active {
+  background-color: var(--dorado-claro);
+  border-color: var(--dorado-claro);
+  color: var(--grafito);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.45);
+}
+
+.hc-btn-logout {
+  background-color: transparent;
+  color: var(--dorado-metalico);
+}
+
+.hc-btn-logout:hover,
+.hc-btn-logout:focus-visible {
+  background-color: var(--dorado-metalico);
+  color: var(--grafito);
+}
+
+@media (min-width: 992px) {
+  .hc-navbar .hc-nav-link.active::after {
+    content: "";
+    position: absolute;
+    left: 0.8rem;
+    right: 0.8rem;
+    bottom: 0.2rem;
+    height: 2px;
+    border-radius: 2px;
+    background-color: var(--dorado-metalico);
+  }
+}
+
+@media (max-width: 991.98px) {
+  .hc-navbar .navbar-collapse {
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(212, 175, 55, 0.25);
+  }
+
+  .hc-navbar .hc-nav-link {
+    display: flex;
+    padding: 0.7rem 0.9rem;
+  }
+
+  .hc-btn-sesion {
+    margin: 0.75rem 0 0.5rem;
+    width: 100%;
+  }
+}
+
+@media (max-width: 400px) {
+  .hc-brand-text {
+    font-size: 1.2rem;
+  }
+}
+
+/* ---------- Footer ---------- */
+.hc-footer {
+  background: linear-gradient(180deg, var(--noche), var(--noche-profunda));
+  color: var(--texto-suave);
+  border-top: 3px solid var(--dorado-metalico);
+}
+
+.hc-footer a {
+  color: var(--texto-suave);
+  text-decoration: none;
+  transition: color var(--transicion-suave);
+}
+
+.hc-footer a:hover,
+.hc-footer a:focus-visible {
+  color: var(--dorado-metalico);
+}
+
+.hc-footer-text {
+  max-width: 22rem;
+  line-height: 1.6;
+}
+
+.hc-footer-title {
+  color: var(--blanco-marfil);
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 1rem;
+  position: relative;
+  padding-bottom: 0.6rem;
+}
+
+.hc-footer-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 2.5rem;
+  height: 2px;
+  background-color: var(--dorado-metalico);
+}
+
+.hc-footer-links li,
+.hc-footer-contacto li {
+  margin-bottom: 0.55rem;
+}
+
+.hc-footer-contacto li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.hc-footer-contacto i {
+  color: var(--dorado-metalico);
+}
+
+.hc-redes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.hc-footer .hc-red {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  color: var(--blanco-marfil);
+  font-size: 1.1rem;
+  transition: background-color var(--transicion-suave), color var(--transicion-suave),
+    transform var(--transicion-suave);
+}
+
+.hc-footer .hc-red:hover,
+.hc-footer .hc-red:focus-visible {
+  background-color: var(--dorado-metalico);
+  color: var(--noche);
+  transform: translateY(-2px);
+}
+
+.hc-footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 767.98px) {
+  .hc-footer-text {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hc-footer-title::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .hc-footer-contacto li {
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hc-navbar *,
+  .hc-footer * {
+    transition: none !important;
+  }
+}
+
+/* ===================== Tablas responsive → cards en mobile ===================== */
+/*
+ * Tablas responsive: en desktop (>= 768px) se ven como tabla normal de
+ * Bootstrap; en mobile (< 768px) cada <tr> se convierte en una card.
+ *
+ * Uso: <Table className="tabla-cards"> y en cada <td> un data-label con el
+ * nombre de la columna (se muestra como etiqueta en la card).
+ * Celdas especiales:
+ *   .celda-imagen   -> imagen a todo el ancho, arriba (cabecera de la card)
+ *   .celda-titulo   -> título destacado, sin etiqueta
+ *   .celda-fila     -> número de fila como franja superior
+ *   .celda-fila--badge -> número de fila como badge sobre la imagen
+ *   .celda-bloque   -> etiqueta arriba y contenido a todo el ancho
+ *   .celda-acciones -> botones al pie, grandes y cómodos para tocar
+ *   td[colspan]     -> estados vacío/cargando: mensaje centrado sin etiqueta
+ */
+
+/* Texto de apoyo de los botones de acción: solo visible en mobile. */
+.tabla-cards .texto-accion {
+  display: none;
+}
+
+.tabla-cards .celda-fecha {
+  white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+  /* El contenedor ya no limita alto ni genera scroll horizontal. */
+  .tabla-scroll.tabla-cards-contenedor {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .tabla-cards-contenedor .table-responsive {
+    overflow-x: visible;
+  }
+
+  .tabla-cards {
+    background: transparent;
+    border: 0;
+    margin-bottom: 0;
+  }
+
+  .tabla-cards thead {
+    display: none;
+  }
+
+  .tabla-cards,
+  .tabla-cards tbody {
+    display: block;
+    width: 100%;
+  }
+
+  /* Cada fila = una card */
+  .tabla-cards tbody tr {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+    background-color: var(--bs-white);
+    color: var(--gris-plomo);
+    text-align: left;
+    border: 1px solid var(--beige-champagne);
+    border-top: 4px solid var(--dorado-metalico);
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  }
+
+  .tabla-cards tbody tr:last-child {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Anula el rayado/hover/bordes de Bootstrap dentro de la card */
+  .tabla-cards > :not(caption) > * > * {
+    box-shadow: none;
+    background-color: transparent;
+    border-width: 0;
+  }
+
+  /* Cada celda = fila "Etiqueta: valor" */
+  .tabla-cards tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-width: 0;
+    padding: 0.65rem 1rem;
+    color: var(--gris-plomo);
+    text-align: right !important;
+    border-bottom: 1px solid var(--bs-border-color-translucent) !important;
+    overflow-wrap: anywhere;
+  }
+
+  .tabla-cards tbody td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    max-width: 45%;
+    color: var(--azul-marino);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  /* Imagen: cabecera de la card a todo el ancho */
+  .tabla-cards tbody td.celda-imagen {
+    order: -2;
+    display: block;
+    padding: 0;
+    border-bottom: 0 !important;
+  }
+
+  .tabla-cards tbody td.celda-imagen::before {
+    display: none;
+  }
+
+  .tabla-cards td.celda-imagen img {
+    display: block;
+    width: 100%;
+    height: 190px;
+    object-fit: cover;
+  }
+
+  /* Imagen ausente ("-") */
+  .tabla-cards td.celda-imagen:not(:has(img)) {
+    display: none;
+  }
+
+  /* Título destacado sin etiqueta */
+  .tabla-cards tbody td.celda-titulo {
+    order: -1;
+    display: block;
+    padding-top: 0.9rem;
+    color: var(--azul-marino);
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-align: left !important;
+  }
+
+  .tabla-cards tbody td.celda-titulo::before {
+    display: none;
+  }
+
+  /* Número de fila como franja superior (cards sin imagen) */
+  .tabla-cards tbody td.celda-fila {
+    order: -3;
+    justify-content: flex-start;
+    gap: 0.4rem;
+    padding: 0.45rem 1rem;
+    background-color: var(--azul-marino);
+    color: var(--dorado-metalico);
+    font-weight: 700;
+  }
+
+  .tabla-cards tbody td.celda-fila::before {
+    content: "#";
+    color: var(--dorado-metalico);
+    font-size: inherit;
+    letter-spacing: 0;
+  }
+
+  /* Número de fila como badge sobre la imagen */
+  .tabla-cards tbody td.celda-fila--badge {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.6rem;
+    z-index: 1;
+    padding: 0.2rem 0.7rem;
+    border-bottom: 0 !important;
+    border-radius: 999px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    font-size: 0.85rem;
+  }
+
+  /* Sin imagen, el badge vuelve a ser franja para no tapar el título */
+  .tabla-cards tbody tr:not(:has(td.celda-imagen img)) td.celda-fila--badge {
+    position: static;
+    padding: 0.45rem 1rem;
+    border-radius: 0;
+    box-shadow: none;
+    font-size: inherit;
+  }
+
+  /* Etiqueta arriba, contenido a todo el ancho (ej. selector de rol) */
+  .tabla-cards tbody td.celda-bloque {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    text-align: left !important;
+  }
+
+  .tabla-cards td.celda-bloque .btn,
+  .tabla-cards td.celda-bloque .form-select {
+    width: 100%;
+    min-height: 44px;
+    margin: 0 !important;
+  }
+
+  .tabla-cards tbody td.celda-precio {
+    font-weight: 700;
+  }
+
+  /* Acciones al pie, botones grandes */
+  .tabla-cards tbody td.celda-acciones {
+    order: 10;
+    gap: 0.6rem;
+    padding: 0.8rem 1rem;
+    background-color: var(--blanco-marfil);
+    border-bottom: 0 !important;
+  }
+
+  .tabla-cards tbody td.celda-acciones::before {
+    display: none;
+  }
+
+  .tabla-cards td.celda-acciones .btn {
+    display: inline-flex;
+    flex: 1 1 0;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 46px;
+    margin: 0 !important;
+    font-weight: 600;
+  }
+
+  .tabla-cards .texto-accion {
+    display: inline;
+  }
+
+  /* Estados vacío / cargando: mensaje centrado, sin etiqueta */
+  .tabla-cards tbody tr:has(> td[colspan]) {
+    border-top-width: 1px;
+  }
+
+  .tabla-cards tbody td[colspan] {
+    justify-content: center;
+    padding: 1.75rem 1rem;
+    color: var(--azul-marino);
+    font-weight: 500;
+    text-align: center !important;
+    border-bottom: 0 !important;
+  }
+
+  .tabla-cards tbody td[colspan]::before {
+    display: none;
+  }
 }
