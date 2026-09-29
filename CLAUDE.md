@@ -39,7 +39,8 @@ src/
 │   ├── ItemReservasAdmin.jsx
 │   └── ItemUsuarios.jsx
 ├── helpers/            # capa de datos (API + sesión + utilidades compartidas)
-│   ├── api.js              # capa HTTP única: peticion() → { ok, status, datos }
+│   ├── api.js              # capa HTTP única: peticion() → { ok, status, datos } (timeout 90 s)
+│   ├── autenticacion.js    # reglas email/password, rutaTrasLogin, configErrorAuth (Login/Registro)
 │   ├── sesion.js           # sesión en sessionStorage ("userKey") + vencimiento del JWT
 │   ├── fechas.js           # hoy local, ISO ↔ datetime-local, formato de fechas
 │   ├── queries.js          # habitaciones
@@ -47,8 +48,8 @@ src/
 │   └── queries.usuarios.js # usuarios
 └── components/
     ├── assets/        # imágenes + imagenes.js (URLs remotas exportadas)
-    ├── common/        # Menu, Footer (layout compartido)
-    ├── pages/         # una vista por ruta
+    ├── common/        # Menu, Footer + CampoPassword, CargandoServidor (usados por 2+ vistas)
+    ├── pages/         # una vista por ruta (Login → /login, Registro → /registro, …)
     │   └── Habitaciones/   # CardHabitacion, ItemReservas (componentes de página, no rutas)
     ├── routes/        # RutasAdmin (subrouter), RutasProtegidas (guarda)
     └── TiempoToken/   # TiempoToken (control de expiración de sesión)
@@ -72,6 +73,7 @@ Todo pasa por **`peticion(ruta, { method, body, auth })`** de `api.js`:
 - Arma la URL con `VITE_API_URL` (fallback `http://localhost:4000/api`). Nunca hardcodear URLs.
 - Agrega `Content-Type: application/json` si hay `body` y `x-token` (token de `sesion.js`) si `auth: true`.
 - **Nunca lanza.** Devuelve siempre `{ ok, status, datos }`: `datos` es el JSON parseado (o `null`); si la respuesta es de error, `datos.mensaje` siempre existe. Error de red → `{ ok:false, status:0, datos:{ mensaje:"No se pudo conectar con el servidor" } }`.
+- Opción `timeout` (ms, default 90000, vía `AbortController`): si vence → `{ ok:false, status:0, datos:{ mensaje:"El servidor tardó demasiado…" } }`. El back está en Render free y la 1ª petición puede tardar 30-60 s.
 - Un **401 en una petición con `auth`** borra la sesión y dispara el evento `sesion-vencida`; `TiempoToken` lo escucha, cierra sesión y manda a `/login`. Por eso los componentes no muestran Swal de error cuando `status === 401`.
 
 Contrato de una función nueva:
@@ -107,7 +109,7 @@ No hay Redux/Context/Zustand. Tabla de cuándo usar qué:
 
 La sesión se comparte por **prop drilling** (`usuarioLogueado`/`setUsuarioLogueado` bajan a `Menu`, `Inicio`, `Login`, `DetalleHabitacion`, `RutasProtegidas`, `TiempoToken`). No introducir un store global sin decisión de equipo; si un dato nuevo lo necesitan 2+ vistas, subilo a `App.jsx` como estas props.
 
-Rutas: `/reservas` va en `<RutasProtegidas usuarioLogueado>` (requiere sesión); `/administrador/*` en `<RutasProtegidas usuarioLogueado soloAdmin>` (sin sesión → `/login`, sin rol admin → `/`). `/catalogo` y `/detallehabitacion/:id` son públicas (reservar pide login).
+Rutas: `/reservas` va en `<RutasProtegidas usuarioLogueado>` (requiere sesión); `/administrador/*` en `<RutasProtegidas usuarioLogueado soloAdmin>` (sin sesión → `/login`, sin rol admin → `/`). `/catalogo` y `/detallehabitacion/:id` son públicas (reservar pide login). `/login` y `/registro` reciben `usuarioLogueado`/`setUsuarioLogueado` y, si ya hay sesión, redirigen (`rutaTrasLogin`: admin → `/administrador`, usuario → `/catalogo`). Registro exitoso hace auto-login; si falla, va a `/login` con `location.state.email` precargado.
 
 ## Temas / estilos
 - **Un solo archivo global: `src/App.css`.** Ahí viven `:root` (variables de marca) y todas las clases custom. No crear archivos `.css` por componente.
@@ -119,6 +121,7 @@ Rutas: `/reservas` va en `<RutasProtegidas usuarioLogueado>` (requiere sesión);
 
 ## Formularios
 - react-hook-form: `useForm()` → `register` con reglas inline (`required`, `minLength`, `maxLength`, `pattern`, `validate`), `handleSubmit(onSubmit)`, y el error se muestra en `<Form.Text className="text-danger">{errors.campo?.message}</Form.Text>`. — `Login.jsx`, `FormularioHabitacion.jsx`, `Contacto.jsx`
+- Peticiones lentas (login/registro): mientras `cargando`, renderizar `<CargandoServidor campos={n} />` (Alert "Conectando con el servidor…" que cambia a los 8 s + skeleton `Placeholder`, `role="status"`) y **ocultar** el form con `d-none` (no desmontarlo) para conservar lo tipeado.
 - Feedback de submit: `Swal.fire` de éxito/error. Ver `.claude/rules/formularios.md` y `.claude/rules/sweetalert.md`.
 
 ## Testing

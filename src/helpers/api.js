@@ -13,12 +13,19 @@ export const EVENTO_SESION_VENCIDA = "sesion-vencida";
 /**
  * Hace una petición al backend. NUNCA lanza.
  * @param {string} ruta  ruta relativa a VITE_API_URL (ej. "/habitacion/3")
- * @param {{method?: string, body?: any, auth?: boolean}} opciones
+ * @param {{method?: string, body?: any, auth?: boolean, timeout?: number}} opciones
+ *   timeout = ms máximos de espera (default 90 s: el back en Render free puede
+ *   tardar hasta un minuto en "despertar").
  * @returns {Promise<{ok: boolean, status: number, datos: any}>}
  *   datos = JSON parseado de la respuesta (o null si no hay cuerpo).
- *   En error de red: { ok:false, status:0, datos:{ mensaje } }.
+ *   En error de red o timeout: { ok:false, status:0, datos:{ mensaje } }.
  */
-export const peticion = async (ruta, { method = "GET", body, auth = false } = {}) => {
+export const TIMEOUT_POR_DEFECTO = 90000;
+
+export const peticion = async (
+  ruta,
+  { method = "GET", body, auth = false, timeout = TIMEOUT_POR_DEFECTO } = {}
+) => {
   const headers = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (auth) {
@@ -26,14 +33,29 @@ export const peticion = async (ruta, { method = "GET", body, auth = false } = {}
     if (token) headers["x-token"] = token;
   }
 
+  const controlador = new AbortController();
+  const temporizador = setTimeout(() => controlador.abort(), timeout);
+
   let respuesta;
   try {
     respuesta = await fetch(`${URL_API}${ruta}`, {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controlador.signal,
     });
   } catch (error) {
+    clearTimeout(temporizador);
+    if (error?.name === "AbortError") {
+      return {
+        ok: false,
+        status: 0,
+        datos: {
+          mensaje:
+            "El servidor tardó demasiado en responder. Intentá de nuevo en unos segundos.",
+        },
+      };
+    }
     console.error("Error de red:", error);
     return {
       ok: false,
@@ -41,6 +63,7 @@ export const peticion = async (ruta, { method = "GET", body, auth = false } = {}
       datos: { mensaje: "No se pudo conectar con el servidor" },
     };
   }
+  clearTimeout(temporizador);
 
   let datos = null;
   try {

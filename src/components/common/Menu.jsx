@@ -88,15 +88,26 @@ const Menu = ({ usuarioLogueado, setUsuarioLogueado }) => {
                 <span>Cerrar Sesión</span>
               </button>
             ) : (
-              <NavLink
-                end
-                className="btn hc-btn-sesion"
-                to="/login"
-                onClick={cerrarMenu}
-              >
-                <i className="bi bi-person-circle" aria-hidden="true"></i>
-                <span>Iniciar Sesión</span>
-              </NavLink>
+              <>
+                <NavLink
+                  end
+                  className="btn hc-btn-sesion hc-btn-registro"
+                  to="/registro"
+                  onClick={cerrarMenu}
+                >
+                  <i className="bi bi-person-plus" aria-hidden="true"></i>
+                  <span>Registrarse</span>
+                </NavLink>
+                <NavLink
+                  end
+                  className="btn hc-btn-sesion"
+                  to="/login"
+                  onClick={cerrarMenu}
+                >
+                  <i className="bi bi-person-circle" aria-hidden="true"></i>
+                  <span>Iniciar Sesión</span>
+                </NavLink>
+              </>
             )}
           </Nav>
         </Navbar.Collapse>

@@ -6,6 +6,7 @@ import Footer from './components/common/Footer.jsx'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import DetalleHabitacion from './components/pages/DetalleHabitacion.jsx'
 import Login from './components/pages/Login.jsx'
+import Registro from './components/pages/Registro.jsx'
 import Inicio from './components/pages/Inicio.jsx'
 import Catalogo from './components/pages/Catalogo.jsx'
 import Contacto from './components/pages/Contacto.jsx'
@@ -62,7 +63,15 @@ function App() {
           ></Route>
           <Route
             path="/login"
-            element={<Login setUsuarioLogueado={setUsuarioLogueado}></Login>}
+            element={
+              <Login usuarioLogueado={usuarioLogueado} setUsuarioLogueado={setUsuarioLogueado}></Login>
+            }
+          ></Route>
+          <Route
+            path="/registro"
+            element={
+              <Registro usuarioLogueado={usuarioLogueado} setUsuarioLogueado={setUsuarioLogueado}></Registro>
+            }
           ></Route>
           <Route
             path="/administrador/*"
