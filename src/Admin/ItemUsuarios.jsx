@@ -10,6 +10,11 @@ import { useState } from "react";
 const ItemUsuarios = ({ usuario, fila, setListaUsuarios }) => {
   const [nuevoRol, setNuevoRol] = useState(usuario.rol);
 
+  const recargarUsuarios = async () => {
+    const { ok, datos } = await listarUsuarios();
+    if (ok && Array.isArray(datos)) setListaUsuarios(datos);
+  };
+
   const eliminarUsuario = () => {
     Swal.fire({
       title: "¿Estás seguro de borrar el usuario?",
@@ -22,22 +27,20 @@ const ItemUsuarios = ({ usuario, fila, setListaUsuarios }) => {
       cancelButtonText: "Cancelar",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        const respuesta = await borrarUsuario(usuario._id);
-        if (respuesta.status === 200) {
+        const { ok, status, datos } = await borrarUsuario(usuario.id);
+        if (ok) {
           Swal.fire({
             title: "Eliminado",
-            text: `El usuario ${usuario.email} fue eliminado correctamente`,
+            text: datos?.mensaje || `El usuario ${usuario.email} fue eliminado correctamente`,
             icon: "success",
           });
-          const usuariosAPI = await listarUsuarios();
-          if (usuariosAPI.status === 200) {
-            const usuariosActualizados = await usuariosAPI.json();
-            setListaUsuarios(usuariosActualizados);
-          }
-        } else {
+          await recargarUsuarios();
+        } else if (status !== 401) {
           Swal.fire({
             title: "Ocurrio un error",
-            text: `El usuario ${usuario.email} no pudo ser eliminado, intenta de nuevo en unos minutos`,
+            text:
+              datos?.mensaje ||
+              `El usuario ${usuario.email} no pudo ser eliminado, intenta de nuevo en unos minutos`,
             icon: "error",
           });
         }
@@ -46,25 +49,26 @@ const ItemUsuarios = ({ usuario, fila, setListaUsuarios }) => {
   };
 
   const cambiarRol = async () => {
-    const usuarioEditado = { rol: nuevoRol };
-    const respuesta = await editarUsuario(usuarioEditado, usuario._id);
-    if (respuesta.status === 200) {
+    const { ok, status, datos } = await editarUsuario(usuario.id, { rol: nuevoRol });
+    if (ok) {
       Swal.fire({
         title: "Rol Cambiado",
-        text: `El rol del usuario ${usuario.email} fue cambiado a ${nuevoRol} con éxito.`,
+        text: datos?.mensaje || `El rol del usuario ${usuario.email} fue cambiado a ${nuevoRol} con éxito.`,
         icon: "success",
       });
-      const usuariosAPI = await listarUsuarios();
-      if (usuariosAPI.status === 200) {
-        const usuariosActualizados = await usuariosAPI.json();
-        setListaUsuarios(usuariosActualizados);
-      }
+      await recargarUsuarios();
     } else {
-      Swal.fire({
-        title: "Error",
-        text: `No se pudo cambiar el rol del usuario ${usuario.email}, intenta de nuevo más tarde.`,
-        icon: "error",
-      });
+      // Si el back rechaza el cambio (ej. quitarse su propio admin), volvemos al rol real.
+      setNuevoRol(usuario.rol);
+      if (status !== 401) {
+        Swal.fire({
+          title: "Error",
+          text:
+            datos?.mensaje ||
+            `No se pudo cambiar el rol del usuario ${usuario.email}, intenta de nuevo más tarde.`,
+          icon: "error",
+        });
+      }
     }
   };
 
@@ -81,7 +85,11 @@ const ItemUsuarios = ({ usuario, fila, setListaUsuarios }) => {
           <option value="usuario">Usuario</option>
           <option value="admin">Admin</option>
         </Form.Select>
-        <Button onClick={cambiarRol} className="my-lg-3 col-lg-4">
+        <Button
+          onClick={cambiarRol}
+          className="my-lg-3 col-lg-4"
+          disabled={nuevoRol === usuario.rol}
+        >
           Cambiar Rol
         </Button>
       </td>

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Container } from 'react-bootstrap';
 import { galeriaIMG1, galeriaIMG10, galeriaIMG11, galeriaIMG2, galeriaIMG3, galeriaIMG4, galeriaIMG5, galeriaIMG6, galeriaIMG7, galeriaIMG8, galeriaIMG9, hotelImg } from '../assets/imagenes';
 

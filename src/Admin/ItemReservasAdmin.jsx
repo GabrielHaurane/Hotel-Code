@@ -1,21 +1,12 @@
-import React from 'react';
 import { Button } from 'react-bootstrap';
 import Swal from 'sweetalert2';
 import { borrarReserva } from '../helpers/queries.reserva.js';
+import { formatearFecha } from '../helpers/fechas.js';
 
 
 const ItemReservasAdmin = ({reserva, fila, setListaReservas}) => {
-   
+
    const { habitacion, fechaEntrada, fechaSalida } = reserva;
-  
-   const formatearFecha = (fechaISO) => {
-      const fecha = new Date(fechaISO);
-      return fecha.toLocaleDateString("es-ES", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    };
 
     const eliminarReserva = () => {
       Swal.fire({
@@ -29,20 +20,22 @@ const ItemReservasAdmin = ({reserva, fila, setListaReservas}) => {
         cancelButtonText: "Cancelar",
       }).then(async (result) => {
         if (result.isConfirmed) {
-          const respuesta = await borrarReserva(reserva._id);
-          if (respuesta.ok) {
+          const { ok, status, datos } = await borrarReserva(reserva.id);
+          if (ok) {
             Swal.fire({
               title: "Eliminada",
-              text: `La reserva fue eliminada correctamente.`,
+              text: datos?.mensaje || "La reserva fue eliminada correctamente.",
               icon: "success",
             });
             setListaReservas((reservasPrevias) =>
-              reservasPrevias.filter((item) => item._id !== reserva._id)
+              reservasPrevias.filter((item) => item.id !== reserva.id)
             );
-          } else {
+          } else if (status !== 401) {
             Swal.fire({
               title: "Ocurrió un error",
-              text: `La reserva no pudo ser eliminada, intenta de nuevo en unos minutos.`,
+              text:
+                datos?.mensaje ||
+                "La reserva no pudo ser eliminada, intenta de nuevo en unos minutos.",
               icon: "error",
             });
           }
@@ -54,16 +47,16 @@ return (
   <tr>
     <td className='text-center'>{fila}</td>
     <td className='text-center'>{reserva.usuarioEmail}</td>
-    <td className='text-center'>{habitacion ? habitacion.tipoHabitacion : "Cargando..."}</td>
+    <td className='text-center'>{habitacion?.tipoHabitacion || "-"}</td>
     <td className='text-center'>
-      {habitacion ? (
+      {habitacion?.imagen ? (
         <img
           src={habitacion.imagen}
           alt={habitacion.tipoHabitacion}
           className="img-admin"
         />
       ) : (
-        "Cargando..."
+        "-"
       )}
     </td>
     <td className='text-center'>{formatearFecha(fechaEntrada)}</td>

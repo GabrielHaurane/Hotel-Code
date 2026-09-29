@@ -38,7 +38,10 @@ src/
 │   ├── ItemHabitacion.jsx
 │   ├── ItemReservasAdmin.jsx
 │   └── ItemUsuarios.jsx
-├── helpers/            # capa de API (un módulo por dominio)
+├── helpers/            # capa de datos (API + sesión + utilidades compartidas)
+│   ├── api.js              # capa HTTP única: peticion() → { ok, status, datos }
+│   ├── sesion.js           # sesión en sessionStorage ("userKey") + vencimiento del JWT
+│   ├── fechas.js           # hoy local, ISO ↔ datetime-local, formato de fechas
 │   ├── queries.js          # habitaciones
 │   ├── queries.reserva.js  # reservas
 │   └── queries.usuarios.js # usuarios
@@ -64,24 +67,29 @@ src/
 - Filas de tabla admin: prefijo `Item` (`ItemUsuarios`, `ItemReservasAdmin`).
 - Handlers en el componente: `camelCase` en español (`cargarReservas`, `eliminarHabitacion`, `cambiarRol`).
 
-## Capa de API (`src/helpers/queries*.js`)
-Contrato de una función nueva:
-1. URL base desde `import.meta.env.VITE_API_*` (ver tabla). Nunca hardcodear.
-2. `fetch` nativo + `try/catch` con `console.error` en el catch.
-3. Endpoints autenticados: header `"x-token": JSON.parse(sessionStorage.getItem("userKey"))?.token`. **Usá `?.`**, no el `.token` pelado (hoy varias funciones lo hacen sin guarda y crashean sin sesión).
-4. La va en el módulo del dominio: habitaciones→`queries.js`, reservas→`queries.reserva.js`, usuarios→`queries.usuarios.js`.
+## Capa de API (`src/helpers/api.js` + `src/helpers/queries*.js`)
+Todo pasa por **`peticion(ruta, { method, body, auth })`** de `api.js`:
+- Arma la URL con `VITE_API_URL` (fallback `http://localhost:4000/api`). Nunca hardcodear URLs.
+- Agrega `Content-Type: application/json` si hay `body` y `x-token` (token de `sesion.js`) si `auth: true`.
+- **Nunca lanza.** Devuelve siempre `{ ok, status, datos }`: `datos` es el JSON parseado (o `null`); si la respuesta es de error, `datos.mensaje` siempre existe. Error de red → `{ ok:false, status:0, datos:{ mensaje:"No se pudo conectar con el servidor" } }`.
+- Un **401 en una petición con `auth`** borra la sesión y dispara el evento `sesion-vencida`; `TiempoToken` lo escucha, cierra sesión y manda a `/login`. Por eso los componentes no muestran Swal de error cuando `status === 401`.
 
-Variables de entorno (definir en `.env`, todas con prefijo `VITE_`):
+Contrato de una función nueva:
+1. Va en el módulo del dominio: habitaciones→`queries.js`, reservas→`queries.reserva.js`, usuarios→`queries.usuarios.js`. Es una línea sobre `peticion` y se documenta qué trae `datos`.
+2. En el componente: `const { ok, status, datos } = await funcion(...)`; si `ok`, usar `datos`; si no, mostrar `datos?.mensaje` (mensaje del back) con `Swal.fire`.
+3. Los ids son `id` (Int). No existe `_id`.
+4. Cada reserva ya trae `habitacion: { id, tipoHabitacion, imagen, precio }`: **no** pedir la habitación por separado (nada de N+1).
+
+Variables de entorno (definir en `.env`, ver `.env.example`; todas con prefijo `VITE_`):
 
 | Variable | Uso | Fuente |
 |---|---|---|
-| `VITE_API_HABITACION` | habitaciones/reservas (base de rutas admin) | `queries.js:1` |
-| `VITE_API_HABITACIONES` | detalle de habitación por id | `queries.js:2` |
-| `VITE_API_RESERVA` | reservas del usuario | `queries.reserva.js:1` |
-| `VITE_API_RESERVA_ADMIN` | listado de reservas admin | `queries.reserva.js:2` |
-| `VITE_API_USUARIO` | login/registro/usuarios | `queries.usuarios.js:1` |
+| `VITE_API_URL` | URL base del backend (ej. `https://hotel-code-backend.onrender.com/api`) | `api.js` |
+| `VITE_EMAILJS_SERVICE_ID` | EmailJS service | `Contacto.jsx` |
+| `VITE_EMAILJS_TEMPLATE_ID` | EmailJS template | `Contacto.jsx` |
+| `VITE_EMAILJS_PUBLIC_KEY` | EmailJS public key | `Contacto.jsx` |
 
-> ⚠️ **Deuda a corregir, no a copiar:** el valor de retorno es inconsistente. Algunas funciones devuelven el `Response` crudo (`login`, `listarHabitacionesAdmin`, `crear/editar/eliminarHabitacionAdmin`, `listarUsuarios`), otras devuelven ya el JSON parseado (`buscarHabitacionesDisponibles`, `obtenerHabitacionAdmin`, `listarReservas`). Por eso el caller a veces chequea `respuesta.status === 200` y a veces `if (respuesta)`. Al tocar una función, **documentá qué devuelve** y preferí devolver el `Response` (que el componente decida). Ver `.claude/rules/api-services.md`.
+En producción `VITE_API_URL` está en `netlify.toml`; las de EmailJS se cargan en el panel de Netlify. Ver `.claude/rules/api-services.md`.
 
 ## Estado
 No hay Redux/Context/Zustand. Tabla de cuándo usar qué:
@@ -89,13 +97,17 @@ No hay Redux/Context/Zustand. Tabla de cuándo usar qué:
 | Necesidad | Herramienta | Evidencia |
 |---|---|---|
 | Estado local de UI (loading, listas, toggles) | `useState` | `Administrador.jsx:16-24` |
-| Datos al montar (fetch inicial) | `useEffect` + handler `async` | `Catalogo.jsx:9-29`, `Reservas.jsx:26-28` |
-| Scroll a un bloque | `useRef` + `scrollIntoView` | `Administrador.jsx:26-28,99` |
-| Sesión del usuario (global) | `usuarioLogueado` en `App.jsx`, bajado por props | `App.jsx:26-27,35,59` |
-| Persistencia de sesión entre recargas | `sessionStorage` (`userKey`/`token`/`expiracionToken`) | `Login.jsx:53-69` |
-| Expiración de sesión | `<TiempoToken>` (setInterval 1s) montado en `App.jsx` | `TiempoToken.jsx`, `App.jsx:34` |
+| Datos al montar (fetch inicial) | `useEffect` con la función `async` definida adentro (o `useCallback`) y dependencias completas | `Catalogo.jsx`, `Reservas.jsx` |
+| Scroll a un bloque | `useRef` + `scrollIntoView` | `Administrador.jsx` |
+| Sesión del usuario (global) | `usuarioLogueado` en `App.jsx` (objeto o `null`), bajado por props | `App.jsx` |
+| Persistencia de sesión entre recargas | `sessionStorage`, **una sola clave** `userKey` = `{ uid, email, rol, token }`, vía `helpers/sesion.js` | `sesion.js`, `Login.jsx` |
+| Expiración de sesión | `<TiempoToken>` programa el cierre con el `exp` real del JWT y escucha el 401 de `api.js` | `TiempoToken.jsx` |
 
-La sesión se comparte por **prop drilling** (`usuarioLogueado`/`setUsuarioLogueado` bajan a `Menu`, `RutasAdmin`, `Login`, `Reservas`). No introducir un store global sin decisión de equipo; si un dato nuevo lo necesitan 2+ vistas, subilo a `App.jsx` como estas props.
+`sesion.js` expone `guardarSesion`, `obtenerSesion`, `borrarSesion`, `obtenerToken`, `tokenExpirado`, `vencimientoToken` y `esAdmin`. **Nadie más toca `sessionStorage`.** Los componentes leen la sesión de la prop `usuarioLogueado`, no de `sessionStorage`.
+
+La sesión se comparte por **prop drilling** (`usuarioLogueado`/`setUsuarioLogueado` bajan a `Menu`, `Inicio`, `Login`, `DetalleHabitacion`, `RutasProtegidas`, `TiempoToken`). No introducir un store global sin decisión de equipo; si un dato nuevo lo necesitan 2+ vistas, subilo a `App.jsx` como estas props.
+
+Rutas: `/reservas` va en `<RutasProtegidas usuarioLogueado>` (requiere sesión); `/administrador/*` en `<RutasProtegidas usuarioLogueado soloAdmin>` (sin sesión → `/login`, sin rol admin → `/`). `/catalogo` y `/detallehabitacion/:id` son públicas (reservar pide login).
 
 ## Temas / estilos
 - **Un solo archivo global: `src/App.css`.** Ahí viven `:root` (variables de marca) y todas las clases custom. No crear archivos `.css` por componente.
@@ -116,11 +128,12 @@ No hay framework de test instalado. No inventes `vitest`/`jest` sin pedirlo. La 
 | # | Regla | Cómo se chequea |
 |---|---|---|
 | 1 | `npm run lint` y `npm run build` pasan | correr ambos |
-| 2 | Ningún `fetch`/`axios` fuera de `helpers/queries*.js` | grep `fetch(` en `src/components` y `src/Admin` |
+| 2 | El único `fetch` está en `helpers/api.js` | grep `fetch(` en `src` (solo debe aparecer en `api.js`) |
 | 3 | Toda env var nueva empieza con `VITE_` | grep `import.meta.env.` |
-| 4 | Acceso a `userKey` con guarda (`?.` o `|| null`) | grep `getItem("userKey")` |
-| 5 | Header de auth = `x-token` (no `Authorization`) | revisar la función de API tocada |
+| 4 | `sessionStorage` solo se usa dentro de `helpers/sesion.js` | grep `sessionStorage` |
+| 5 | Header de auth = `x-token` (no `Authorization`), lo pone `peticion` con `auth: true` | revisar la función de API tocada |
 | 6 | Borrados con `Swal.fire` + `showCancelButton` | revisar el handler de borrado |
 | 7 | Colores nuevos = variable de `:root`, no hex nuevo | grep `#` en el diff de estilos |
-| 8 | Rutas admin bajo `<RutasProtegidas>` | revisar `App.jsx`/`RutasAdmin.jsx` |
+| 8 | Rutas admin bajo `<RutasProtegidas soloAdmin>` | revisar `App.jsx`/`RutasAdmin.jsx` |
 | 9 | Commits en español, claros (sin `exact` prop de router v5 en rutas nuevas) | revisar diff/mensaje |
+| 10 | Nada de `_id`: los ids son `id` | grep `_id` en `src` |

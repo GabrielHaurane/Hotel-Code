@@ -1,163 +1,30 @@
-const URLHabitacion = import.meta.env.VITE_API_HABITACION;
-const URLHabitaciones = import.meta.env.VITE_API_HABITACIONES;
+// Habitaciones. Todas las funciones devuelven { ok, status, datos } (ver api.js).
+import { peticion } from "./api.js";
 
-export const buscarHabitacionesDisponibles = async () => {
-  try {
-    const respuesta = await fetch(
-      `${URLHabitacion}/disponibles`
-    );
-    if (!respuesta.ok) {
-      throw new Error("Error al buscar habitaciones");
-    }
-    const data = await respuesta.json();
-    return data;
-  } catch (error) {
-    console.error("Error en la solicitud:", error.message);
-    return { mensaje: "Error al buscar habitaciones" };
-  }
+// PÚBLICA: habitaciones disponibles → datos: [Habitacion]
+export const listarHabitacionesDisponibles = () => peticion("/disponibles");
+
+// PÚBLICA: habitaciones libres en un rango (fechas YYYY-MM-DD) → datos: [Habitacion]
+export const buscarCatalogoPorFechas = (fechaEntrada, fechaSalida) => {
+  const parametros = new URLSearchParams({ fechaEntrada, fechaSalida });
+  return peticion(`/catalogo?${parametros.toString()}`);
 };
 
-export const obtenerCatalogoHabitaciones = async () => {
-  try {
-    const respuesta = await fetch(`${URLHabitacion}/catalogo`);
-    if (!respuesta.ok) {
-      throw new Error("Error al obtener el catálogo");
-    }
-    const data = await respuesta.json();
-    return data;
-  } catch (error) {
-    console.error("Error en la solicitud:", error.message);
-    return { mensaje: "Error al obtener el catálogo de habitaciones" };
-  }
-};
+// PÚBLICA: detalle de una habitación → datos: Habitacion (404 si no existe)
+export const obtenerHabitacion = (id) => peticion(`/habitacion/${id}`);
 
-export const listarHabitacionesAdmin = async () => {
-  try {
-    const respuesta = await fetch(`${URLHabitacion}/habitacion`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-token": JSON.parse(sessionStorage.getItem("userKey")).token,
-      },
-    });
-    if (!respuesta.ok) {
-      throw new Error("Error al listar habitaciones");
-    }
-    return respuesta;
-  } catch (error) {
-    console.error("Error en la solicitud:", error.message);
-    return { mensaje: "Error al listar habitaciones" };
-  }
-};
+// ADMIN: listado completo → datos: [Habitacion]
+export const listarHabitacionesAdmin = () =>
+  peticion("/habitacion", { auth: true });
 
-export const crearHabitacionAdmin = async (habitacion) => {
-  try {
-    const respuesta = await fetch(`${URLHabitacion}/habitacion`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-token": JSON.parse(sessionStorage.getItem('userKey')).token
-      },
-      body: JSON.stringify(habitacion),
-    });
-    if (!respuesta.ok) {
-      throw new Error("Error al crear la habitación");
-    }
-    return respuesta
-  } catch (error) {
-    console.error("Error en la solicitud:", error.message);
-    return { mensaje: "Error al crear la habitación" };
-  }
-};
+// ADMIN: alta → 201 datos: { mensaje, habitacion }
+export const crearHabitacionAdmin = (habitacion) =>
+  peticion("/habitacion", { method: "POST", body: habitacion, auth: true });
 
-export const editarHabitacionAdmin = async (
-  idHabitacion,
-  habitacionActualizada
-) => {
-  try {
-    const respuesta = await fetch(
-      `${URLHabitacion}/habitacion/${idHabitacion}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-token":  JSON.parse(sessionStorage.getItem("userKey")).token,
+// ADMIN: edición → 200 datos: { mensaje, habitacion }
+export const editarHabitacionAdmin = (id, habitacion) =>
+  peticion(`/habitacion/${id}`, { method: "PUT", body: habitacion, auth: true });
 
-        },
-        body: JSON.stringify(habitacionActualizada),
-      }
-    );
-    if (!respuesta.ok) {
-      throw new Error("Error al editar la habitación");
-    }
-    return respuesta
-  } catch (error) {
-    console.error("Error en la solicitud:", error.message);
-    return { mensaje: "Error al editar la habitación" };
-  }
-};
-
-export const eliminarHabitacionAdmin = async (idHabitacion) => {
-  try {
-    const respuesta = await fetch(
-      `${URLHabitacion}/habitacion/${idHabitacion}`,
-      {
-        method: "DELETE",
-        headers: {
-          "x-token": JSON.parse(sessionStorage.getItem("userKey")).token,
-        },
-      }
-    );
-    if (!respuesta.ok) {
-      throw new Error("Error al eliminar la habitación");
-    }
-    return respuesta;
-  } catch (error) {
-    console.error("Error en la solicitud:", error.message);
-    return { mensaje: "Error al eliminar la habitación" };
-  }
-};
-export const buscarHabitacionAPI = async(id)=>{
-  try {
-      const respuesta = await fetch(URLHabitaciones+'/'+ id)
-      return respuesta
-  } catch (error) {
-      return false;
-  }
-}
-
-export const obtenerHabitacionAdmin = async (idHabitacion) => {
-  try {
-    const respuesta = await fetch(
-      `${URLHabitacion}/habitacion/${idHabitacion}`,
-    );
-    if (!respuesta.ok) {
-      throw new Error("Error al obtener los detalles de la habitación");
-    }
-    const data = await respuesta.json();
-    return data;
-  } catch (error) {
-    console.error("Error en la solicitud:", error.message);
-    return { mensaje: "Error al obtener los detalles de la habitación" };
-  }
-};
-
-export const listadoHabitacionesDisponibles = async () =>{
-  try {
-    const respuesta = await fetch(`${URLHabitacion}/disponibles`,
-      {
-        headers:{
-          "x-token": JSON.parse(sessionStorage.getItem("userKey")).token
-        }
-      }
-    )
-    if (!respuesta.ok) {
-      throw new Error("Error al obtener los detalles de la habitación");
-    }
-    const data = await respuesta.json()
-    return data;
-  } catch (error) {
-    console.error(error)
-    return false;
-  }
-}
+// ADMIN: baja → 200 datos: { mensaje }
+export const eliminarHabitacionAdmin = (id) =>
+  peticion(`/habitacion/${id}`, { method: "DELETE", auth: true });

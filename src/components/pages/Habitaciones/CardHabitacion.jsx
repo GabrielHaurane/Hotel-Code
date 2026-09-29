@@ -1,4 +1,3 @@
-import React from "react";
 import { Card, CardFooter } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { galeriaIMG1 } from "../../assets/imagenes.js";
@@ -19,7 +18,7 @@ const CardHabitacion = ({ habitacion }) => {
         </Card.Body>
         <CardFooter className="d-flex align-content-md-end flex-md-wrap justify-content-end">
           <div>
-            <Link to={`../detallehabitacion/${habitacion._id}`} className="btn btn-dark text-white">
+            <Link to={`../detallehabitacion/${habitacion.id}`} className="btn btn-dark text-white">
               Ver detalles
             </Link>
           </div>

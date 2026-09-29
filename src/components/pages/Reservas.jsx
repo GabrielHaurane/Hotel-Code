@@ -3,29 +3,33 @@ import { Table } from "react-bootstrap";
 import ItemReservas from "./Habitaciones/ItemReservas";
 import Swal from "sweetalert2";
 import { listarReservas } from "../../helpers/queries.reserva.js";
-import { obtenerHabitacionAdmin } from "../../helpers/queries.js";
 
-const Reservas = ({ email, token }) => {
+// Ruta protegida: el back identifica al usuario por el token (x-token).
+// Cada reserva ya trae su `habitacion`, no hace falta pedirla aparte.
+const Reservas = () => {
   const [listaReservas, setListaReservas] = useState([]);
   const [cargando, setCargando] = useState(true);
 
-  const cargarReservas = async () => {
-    setCargando(true);
-    const datos = await listarReservas(email, token);
-    if (datos) {
-      const reservasConDetalles = await Promise.all(
-        datos.map(async (reserva) => {
-          const habitacion = await obtenerHabitacionAdmin(reserva.habitacionID);
-          return { ...reserva, habitacion };
-        })
-      );
-      setListaReservas(reservasConDetalles);
-    }
-    setCargando(false);
-  };
   useEffect(() => {
+    const cargarReservas = async () => {
+      setCargando(true);
+      const { ok, status, datos } = await listarReservas();
+      if (ok && Array.isArray(datos)) {
+        setListaReservas(datos);
+      } else {
+        setListaReservas([]);
+        if (status !== 401) {
+          Swal.fire({
+            title: "Error",
+            text: datos?.mensaje || "No se pudieron cargar tus reservas",
+            icon: "error",
+          });
+        }
+      }
+      setCargando(false);
+    };
     cargarReservas();
-  }, [email, token]);
+  }, []);
   return (
     <div className="backQS flex-grow-1">
       <div className=" container">
@@ -53,7 +57,7 @@ const Reservas = ({ email, token }) => {
                 {Array.isArray(listaReservas) && listaReservas.length > 0 ? (
                   listaReservas.map((reserva, index) => (
                     <ItemReservas
-                      key={reserva._id}
+                      key={reserva.id}
                       reserva={reserva}
                       fila={index + 1}
                       setListaReservas={setListaReservas}
