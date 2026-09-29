@@ -1,0 +1,23 @@
+# Configuración de Netlify para el frontend de Hotel Code (Vite SPA).
+# Con esto, al conectar el repo en Netlify, no hace falta configurar nada a mano:
+# toma el build, la carpeta de salida, las URLs de la API y el ruteo del SPA.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# URLs de la API (apuntan al backend en Render). No son secretas: quedan
+# igual embebidas en el bundle del cliente, así que van acá directamente.
+[build.environment]
+  VITE_API_HABITACION = "https://hotel-code-backend.onrender.com/api"
+  VITE_API_HABITACIONES = "https://hotel-code-backend.onrender.com/api/habitacion"
+  VITE_API_RESERVA = "https://hotel-code-backend.onrender.com/api/reserva"
+  VITE_API_RESERVA_ADMIN = "https://hotel-code-backend.onrender.com/api/reservasAdmin"
+  VITE_API_USUARIO = "https://hotel-code-backend.onrender.com/api/usuarios"
+
+# Ruteo del SPA: react-router usa BrowserRouter, así que cualquier ruta
+# (ej. /catalogo, /login) debe servir index.html en vez de dar 404.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
