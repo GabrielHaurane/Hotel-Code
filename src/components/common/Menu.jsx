@@ -25,7 +25,7 @@ const Menu = ({ usuarioLogueado, setUsuarioLogueado }) => {
 
   return (
     <Navbar
-      expand="lg"
+      expand="xl"
       variant="dark"
       sticky="top"
       collapseOnSelect
@@ -52,7 +52,7 @@ const Menu = ({ usuarioLogueado, setUsuarioLogueado }) => {
           className="hc-toggler"
         />
         <Navbar.Collapse id="hc-navbar-nav">
-          <Nav className="ms-auto align-items-lg-center hc-nav">
+          <Nav className="ms-auto align-items-xl-center hc-nav">
             <ItemMenu onClick={cerrarMenu} to="/" icono="bi-house-door">
               Inicio
             </ItemMenu>

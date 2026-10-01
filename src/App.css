@@ -258,7 +258,14 @@
   color: var(--dorado-metalico);
 }
 
-@media (min-width: 992px) {
+/* El menú se despliega en horizontal desde xl (1200px): en lg no entran
+   todos los ítems (sobre todo con sesión de admin) y el texto se partía. */
+@media (min-width: 1200px) {
+  .hc-navbar .hc-nav-link,
+  .hc-btn-sesion {
+    white-space: nowrap;
+  }
+
   .hc-navbar .hc-nav-link.active::after {
     content: "";
     position: absolute;
@@ -271,7 +278,47 @@
   }
 }
 
-@media (max-width: 991.98px) {
+/* Desde xl el menú va en una sola línea: con sesión de admin hay 8 ítems,
+   así que se usa un espaciado más compacto que el de Bootstrap. */
+@media (min-width: 1200px) {
+  .hc-nav {
+    gap: 0;
+  }
+
+  .hc-navbar .hc-nav-link {
+    gap: 0.35rem;
+    padding: 0.5rem 0.55rem;
+  }
+
+  .hc-navbar .hc-nav-link.active::after {
+    left: 0.55rem;
+    right: 0.55rem;
+  }
+
+  .hc-btn-sesion {
+    margin-left: 0.35rem;
+    padding: 0.4rem 0.9rem;
+  }
+}
+
+/* xl (1200-1399px): el contenedor mide 1140px; además se achica la letra y
+   se ocultan los íconos de los links (el botón de sesión conserva el suyo). */
+@media (min-width: 1200px) and (max-width: 1399.98px) {
+  .hc-brand-text {
+    font-size: 1.3rem;
+  }
+
+  .hc-navbar .hc-nav-link,
+  .hc-btn-sesion {
+    font-size: 0.95rem;
+  }
+
+  .hc-navbar .hc-nav-link i {
+    display: none;
+  }
+}
+
+@media (max-width: 1199.98px) {
   .hc-navbar .navbar-collapse {
     margin-top: 0.75rem;
     padding-top: 0.5rem;
@@ -835,3 +882,41 @@
     font-size: 1.5rem;
   }
 }
+
+/* ===================== Card de habitación (catálogo) ===================== */
+/* Recorta la imagen al contorno redondeado de la card en todas las vistas */
+.card-habitacion {
+  overflow: hidden;
+}
+
+/* Mobile: alto fijo por proporción para que una foto vertical no estire la card */
+.card-habitacion__media img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.card-habitacion .card-footer .btn {
+  white-space: nowrap;
+}
+
+/* Tablet en adelante: imagen a la izquierda ocupando todo el alto de la card.
+   La imagen va en absoluto para que el alto lo defina el contenido de la card
+   y no la proporción de la foto (una foto vertical estiraba la card). */
+@media (min-width: 768px) {
+  .card-habitacion__media {
+    position: relative;
+    flex: 0 0 40%;
+    max-width: 40%;
+    min-height: 220px;
+  }
+
+  .card-habitacion__media img {
+    position: absolute;
+    inset: 0;
+    aspect-ratio: auto;
+    height: 100%;
+    border-radius: 0 !important;
+  }
+}
+
